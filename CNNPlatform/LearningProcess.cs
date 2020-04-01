@@ -22,7 +22,7 @@ namespace CNNPlatform
 
             var instance = (SharedObject)Components.Locker.ObjectLocker.CreateServer(SharedObject.ChannelName, SharedObject.ObjectName, typeof(SharedObject));
             Model.Creater.Core.Instance = instance;
-            var model = Model.Creater.Core.TestModel(4);
+            var model = Model.Creater.Core.TestModel(16);
 
             var inputvariavble = model.Layer[0].Variable as Function.Variable.VariableBase;
             var outputvariavble = model.Layer[model.Layer.Count - 1].Variable as Function.Variable.VariableBase;
@@ -38,7 +38,7 @@ namespace CNNPlatform
             {
                 #region LearningProcess
                 Components.Imaging.FileLoader.Instance.LoadImage(
-                    inputvariavble.InWidth, inputvariavble.InHeight, outputvariavble.OutWidth / inputvariavble.InWidth, inputvariavble.BatchCount,
+                    inputvariavble.InWidth, inputvariavble.InHeight, outputvariavble.OutWidth, outputvariavble.OutHeight, inputvariavble.BatchCount,
                     inputvariavble.InputChannels, outputvariavble.OutputChannels, out inputvariavble.Input, out teacher);
                 for (int i = 0; i < model.Layer.Count; i++)
                 {
@@ -57,12 +57,26 @@ namespace CNNPlatform
                         (model.Layer[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model.Layer[i].Variable as Function.Variable.VariableBase).Propagator;
                     }
                 }
-                Components.Imaging.View.Show(outputvariavble.Output, "learning...");
+                var error = 0.0;
+                for (int i = 0; i < outputvariavble.Sigma.Data.Length; i++)
+                {
+                    error += Math.Abs(outputvariavble.Sigma.Data[i]);
+                }
+                error /= outputvariavble.Sigma.Length;
                 #endregion
+                Components.Imaging.View.Show(inputvariavble.Input, "Input...", 0, 0);
+                Components.Imaging.View.Show(outputvariavble.Output, "learning...", 0, inputvariavble.InHeight);
+                Components.Imaging.View.Show(outputvariavble.Sigma, "sigma...", inputvariavble.InWidth, 0);
                 Initializer.Generatiion++;
                 using (instance.Lock())
                 {
                     instance.Generation = Initializer.Generatiion;
+                    instance.Error = error;
+                    for (int i = 0; i < model.Layer.Count; i++)
+                    {
+                        var _weight = (object)instance.Weignt[i];
+                        model.Layer[i].Variable.OverwriteParameter(ref _weight);
+                    }
                     Initializer.Terminate = instance.ExitApplication;
                 }
                 Console.WriteLine(Initializer.Generatiion);

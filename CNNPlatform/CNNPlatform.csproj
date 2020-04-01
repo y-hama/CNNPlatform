@@ -50,6 +50,8 @@
     <Compile Include="Function\Process\ConvolutionForward.cs" />
     <Compile Include="Function\Process\GpgpuSource\gp_convback_bias.cs" />
     <Compile Include="Function\Process\GpgpuSource\gp_convback_kernel.cs" />
+    <Compile Include="Function\Process\Optimizer\Adam.cs" />
+    <Compile Include="Function\Process\Optimizer\OptimizerBase.cs" />
     <Compile Include="Function\Variable\ConvolutionValiable.cs" />
     <Compile Include="Function\Variable\VariableBase.cs" />
     <Compile Include="InferenceProcess.cs" />

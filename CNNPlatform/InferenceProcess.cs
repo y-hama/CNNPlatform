@@ -8,7 +8,12 @@ namespace CNNPlatform
 {
     public class InferenceProcess
     {
+        public static int ModelGeneration { get; private set; }
+
         public static System.Threading.CountdownEvent TerminatedSignal { get; private set; } = new System.Threading.CountdownEvent(1);
+
+        public static double LearningError { get; private set; }
+        public static List<Components.Real[]> Difference { get; set; } = new List<Components.Real[]>();
 
         private static bool running { get; set; } = false;
         private static bool terminate { get; set; } = false;
@@ -29,39 +34,42 @@ namespace CNNPlatform
 
         public void Start(Components.Locker.ObjectLocker.Exclusive _instance)
         {
-            var gen = 0;
+            ModelGeneration = 0;
             var instance = (SharedObject)_instance;
             new Task(() =>
             {
                 running = true;
                 var model = Model.Creater.Core.TestModel();
-                List<SharedObject.WeigntData> weight;
+                List<SharedObject.WeightData> weight;
                 using (instance.Lock())
                 {
-                    gen = instance.Generation;
-                    weight = new List<SharedObject.WeigntData>(instance.Weignt);
+                    ModelGeneration = instance.Generation;
+                    weight = new List<SharedObject.WeightData>(instance.Weignt);
                 }
                 for (int i = 0; i < model.Layer.Count; i++)
                 {
                     model.Layer[i].Variable.UpdateParameter(weight[i]);
+                    Difference.Add(weight[i].Difference);
                 }
 
                 var inputvariavble = model.Layer[0].Variable as Function.Variable.ConvolutionValiable;
                 var outputvariavble = model.Layer[model.Layer.Count - 1].Variable as Function.Variable.ConvolutionValiable;
                 while (!Terminate)
                 {
-                    #region ReadWeight
+                    #region ReadWeight 
                     using (var key = instance.LockThrow())
                     {
                         if (key != null)
                         {
-                            gen = instance.Generation;
-                            weight = new List<SharedObject.WeigntData>(instance.Weignt);
+                            ModelGeneration = instance.Generation;
+                            LearningError = instance.Error;
+                            weight = new List<SharedObject.WeightData>(instance.Weignt);
                         }
                     }
                     for (int i = 0; i < model.Layer.Count; i++)
                     {
                         model.Layer[i].Variable.UpdateParameter(weight[i]);
+                        Difference[i] = weight[i].Difference;
                     }
                     #endregion
                     #region InferenceProcess
@@ -78,8 +86,8 @@ namespace CNNPlatform
                         }
                     }
 
-                    Components.Imaging.View.Show(outputvariavble.Output, "inference");
                     #endregion
+                    Components.Imaging.View.Show(outputvariavble.Output, "inference", inputvariavble.InWidth, inputvariavble.InHeight);
                 }
                 using (var key = instance.Lock(Components.Locker.Priority.Critical))
                 {

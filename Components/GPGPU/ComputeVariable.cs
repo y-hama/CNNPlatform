@@ -120,6 +120,7 @@ namespace Components.GPGPU
         }
 
         public abstract void UpdateParameter(object parameter);
-        
+        public abstract void OverwriteParameter(ref object parameter);
+
     }
 }

@@ -29,7 +29,7 @@ namespace Components.Imaging
             Directory = info;
         }
 
-        public void LoadImage(int width, int height, double scale, int batchcount, int inchannels, int outchannels, out RNdMatrix smat, out RNdMatrix tmat)
+        public void LoadImage(int inw, int inh, int outw, int outh, int batchcount, int inchannels, int outchannels, out RNdMatrix smat, out RNdMatrix tmat)
         {
             smat = tmat = null;
 
@@ -48,7 +48,7 @@ namespace Components.Imaging
                     else if (outchannels == 3) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.GRAY2BGR); }
                     else { throw new Exception(); }
                 }
-                sframe = sframe.Resize(new Size(width, height));
+                sframe = sframe.Resize(new Size(inw, inh));
                 sframes.Add(sframe.Clone());
 
                 var tframe = mat.Clone();
@@ -58,12 +58,22 @@ namespace Components.Imaging
                     else if (outchannels == 3) { Cv2.CvtColor(tframe, tframe, ColorConversionCodes.GRAY2BGR); }
                     else { throw new Exception(); }
                 }
-                tframe = tframe.Resize(new Size(scale * width, scale * height));
+                tframe = Effect(tframe.Resize(new Size(outw, outh)));
                 tframes.Add(tframe.Clone());
             }
 
             Converter.MatToRNdMatrix(sframes.ToArray(), out smat);
             Converter.MatToRNdMatrix(tframes.ToArray(), out tmat);
+        }
+
+        private Mat Effect(Mat source)
+        {
+            Mat frame = source.Clone();
+            //Cv2.Laplacian(source, frame, source.Type());
+
+            //Cv2.AddWeighted(source, 0.25, frame, 0.75, 1, frame);
+            
+            return frame;
         }
     }
 }

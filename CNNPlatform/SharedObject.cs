@@ -15,14 +15,23 @@ namespace CNNPlatform
 
 
         public int Generation { get; set; }
+        public double Error { get; set; }
         public bool ExitApplication { get; set; }
 
         [Serializable]
-        public class WeigntData
+        public class WeightData
         {
+            public int DataCount { get; private set; }
             public Components.RNdObject[] Data { get; set; }
+            public Components.Real[] Difference { get; set; }
+            public WeightData(int count)
+            {
+                DataCount = count;
+                Data = new Components.RNdObject[count];
+                Difference = new Components.Real[count];
+            }
         }
-        public List<WeigntData> Weignt { get; set; } = new List<WeigntData>();
+        public List<WeightData> Weignt { get; set; } = new List<WeightData>();
     }
 
 }

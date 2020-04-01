@@ -93,16 +93,14 @@ namespace CNNPlatform.Function.Process
                         int x = idx - y * OutWidth;
                         int otx = bcnt * OutArea + och * OutSize + idx;
 
-                        double calccount = 0;
                         for (int k = 0; k < KernelLength; k++)
                         {
                             int t = k / KernelArea;
                             int s = k - t * KernelArea;
-                            int ix = (int)(x / OutScale) + KernelExpand * (s - KernelSize);
-                            int iy = (int)(y / OutScale) + KernelExpand * (t - KernelSize);
+                            int ix = (int)(((float)x / OutScale) + KernelExpand * (s - KernelSize));
+                            int iy = (int)(((float)y / OutScale) + KernelExpand * (t - KernelSize));
                             if (ix >= 0 && ix < InWidth && iy >= 0 && iy < InHeight)
                             {
-                                calccount++;
                                 for (int ich = 0; ich < InputChannels; ich++)
                                 {
                                     int itx = bcnt * InArea + ich * InSize + iy * InWidth + ix;
@@ -113,7 +111,6 @@ namespace CNNPlatform.Function.Process
                             }
                         }
                         Output[otx] = output;
-                        //if (calccount > 0) { Output[otx] /= calccount; } 
                     });
                 });
             });

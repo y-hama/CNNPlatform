@@ -22,15 +22,15 @@ namespace CNNPlatform.Model
                 {
                     BatchCount = batchcount,
                     InputChannels = 3,
-                    InWidth = 160,
-                    InHeight = 120,
+                    InWidth = 80,
+                    InHeight = 60,
 
                     OutputChannels = 3,
                     OutScale = 1,
 
-                    KernelSize = 1,
-                    KernelExpand = 2,
-                    Rho = 0.00001,
+                    KernelSize = 3,
+                    KernelExpand = 1,
+                    Rho = 0.001,
                 }.Confirm(Instance),
             });
             return model;

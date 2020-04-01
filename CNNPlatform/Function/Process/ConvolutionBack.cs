@@ -11,7 +11,12 @@ namespace CNNPlatform.Function.Process
     {
         protected override void CreateGpuSource()
         {
+            BiasOptimizer = new Optimizer.Adam();
+            KernelOptimizer = new Optimizer.Adam();
         }
+
+        Optimizer.OptimizerBase BiasOptimizer { get; set; }
+        Optimizer.OptimizerBase KernelOptimizer { get; set; }
 
         #region 
         private int BatchCount;
@@ -49,6 +54,8 @@ namespace CNNPlatform.Function.Process
         private Components.Real[] WeightBias;
         private Components.Real[] dKernel;
         private Components.Real[] dBias;
+
+        private Components.Real[] Difference;
         #endregion
 
         protected override void ConvertVariable(ComputeVariable _variable)
@@ -87,10 +94,31 @@ namespace CNNPlatform.Function.Process
             Propagator = variable.Propagator.Data;
             WeightKernel = variable.WeightKernel.Data;
             WeightBias = variable.WeightBias.Data;
+
+            Difference = variable.WeightDifference;
         }
 
         protected override void CpuFunction()
         {
+            dBias = (Components.Real[])WeightBias.Clone();
+            Parallel(0, InputChannels, i0 =>
+            {
+                Parallel(0, OutputChannels, i1 =>
+                {
+                    int bidx = i0 * OutputChannels + i1;
+                    dBias[bidx] = 0;
+                    for (int b = 0; b < BatchCount; b++)
+                    {
+                        for (int i = 0; i < OutSize; i++)
+                        {
+                            int oidx = b * OutArea + i1 * OutSize + i;
+                            dBias[bidx] += Sigma[oidx];
+                        }
+                    }
+
+                });
+            });
+
             dKernel = (Components.Real[])WeightKernel.Clone();
             Parallel(0, InputChannels, i0 =>
             {
@@ -98,7 +126,6 @@ namespace CNNPlatform.Function.Process
                 {
                     Parallel(0, KernelLength, i2 =>
                     {
-                        float _stride = 1.0f / (float)OutScale;
                         int s = (int)(i2 / KernelArea);
                         int t = i2 - s * (KernelArea);
                         int _s = s - KernelSize, _t = t - KernelSize;
@@ -112,12 +139,42 @@ namespace CNNPlatform.Function.Process
                                 int ox = (int)(i - oy * OutWidth);
                                 int oidx = b * OutArea + i1 * OutSize + i;
 
-                                int _ix = (int)((float)ox * _stride) + _s * KernelExpand;
-                                int _iy = (int)((float)oy * _stride) + _t * KernelExpand;
+                                int _ix = (int)(((float)ox * OutScale) + _s * KernelExpand);
+                                int _iy = (int)(((float)oy * OutScale) + _t * KernelExpand);
                                 if (_ix >= 0 && _iy >= 0 && _ix < InWidth && _iy < InHeight)
                                 {
-                                    int _idx = b * InArea + i1 * InSize + _iy * InWidth + _ix;
+                                    int _idx = b * InArea + i0 * InSize + _iy * InWidth + _ix;
                                     dKernel[kidx] += Input[_idx] * Sigma[oidx];
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+
+            Parallel(0, BatchCount, b =>
+            {
+                Parallel(0, InputChannels, ich =>
+                {
+                    Parallel(0, InSize, idx =>
+                    {
+                        int y = (int)(idx / InWidth);
+                        int x = idx - y * InWidth;
+                        int pidx = b * InArea + ich * InSize + idx;
+                        Propagator[pidx] = 0;
+                        for (int k = 0; k < KernelLength; k++)
+                        {
+                            int t = k / KernelArea;
+                            int s = k - t * KernelArea;
+                            int ox = (int)(((float)x / OutScale) - KernelExpand * (s - KernelSize));
+                            int oy = (int)(((float)y / OutScale) - KernelExpand * (t - KernelSize));
+                            if (ox >= 0 && oy >= 0 && ox < OutWidth && oy < OutHeight)
+                            {
+                                for (int och = 0; och < OutputChannels; och++)
+                                {
+                                    int oidx = b * OutArea + och * OutSize + oy * OutWidth + ox;
+                                    int kidx = ich * (OutputChannels * KernelLength) + och * KernelLength + k;
+                                    Propagator[pidx] += Sigma[oidx] * WeightKernel[kidx];
                                 }
                             }
                         }
@@ -138,10 +195,8 @@ namespace CNNPlatform.Function.Process
 
         public override void Update()
         {
-            for (int i = 0; i < dKernel.Length; i++)
-            {
-                WeightKernel[i] += -(rho / BatchCount) * dKernel[i];
-            }
+            Difference[0] = BiasOptimizer.Update(ref WeightBias, dBias, (rho / (BatchCount)));
+            Difference[1] = KernelOptimizer.Update(ref WeightKernel, dKernel, (rho / (BatchCount * KernelLength)));
         }
     }
 }

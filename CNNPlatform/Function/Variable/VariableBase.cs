@@ -34,5 +34,6 @@ namespace CNNPlatform.Function.Variable
 
         public Components.RNdMatrix Sigma;
         public Components.RNdMatrix Propagator;
+
     }
 }
