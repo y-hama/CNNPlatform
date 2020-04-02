@@ -142,7 +142,7 @@ namespace CNNPlatform
                     #endregion
 
                     Components.Imaging.View.Show(
-                        new Components.RNdMatrix[] { inputvariavble.Input, outputvariavble.Output, teacher, (Components.RNdMatrix)outputvariavble.Sigma.Abs() },
+                        new Components.RNdMatrix[] { inputvariavble.Input, teacher, (Components.RNdMatrix)outputvariavble.Sigma.Abs(), outputvariavble.Output },
                         "learning...");
 
                     Initializer.Generatiion++;
