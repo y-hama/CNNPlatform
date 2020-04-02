@@ -35,5 +35,14 @@ namespace CNNPlatform.Function.Variable
         public Components.RNdMatrix Sigma;
         public Components.RNdMatrix Propagator;
 
+        protected abstract void ConfirmField(object shared);
+        public VariableBase Confirm(object shared)
+        {
+            ConfirmField(shared);
+            return this;
+        }
+
+        public abstract void UpdateParameter(object parameter);
+        public abstract void OverwriteParameter(ref object parameter);
     }
 }

@@ -15,6 +15,8 @@ namespace CNNPlatform
         public static double LearningError { get; private set; }
         public static List<Components.Real[]> Difference { get; set; } = new List<Components.Real[]>();
 
+        public static Components.RNdMatrix Result { get; private set; }
+
         private static bool running { get; set; } = false;
         private static bool terminate { get; set; } = false;
         public static bool Terminate
@@ -34,6 +36,10 @@ namespace CNNPlatform
 
         public void Start(Components.Locker.ObjectLocker.Exclusive _instance)
         {
+            // Inferenceを実施する
+            // LockClientとして動作する
+            // GPUを使用しない
+
             ModelGeneration = 0;
             var instance = (SharedObject)_instance;
             new Task(() =>
@@ -46,14 +52,14 @@ namespace CNNPlatform
                     ModelGeneration = instance.Generation;
                     weight = new List<SharedObject.WeightData>(instance.Weignt);
                 }
-                for (int i = 0; i < model.Layer.Count; i++)
+                for (int i = 0; i < model.LayerCount; i++)
                 {
-                    model.Layer[i].Variable.UpdateParameter(weight[i]);
+                    model[i].Variable.UpdateParameter(weight[i]);
                     Difference.Add(weight[i].Difference);
                 }
 
-                var inputvariavble = model.Layer[0].Variable as Function.Variable.ConvolutionValiable;
-                var outputvariavble = model.Layer[model.Layer.Count - 1].Variable as Function.Variable.ConvolutionValiable;
+                var inputvariavble = model[0].Variable as Function.Variable.ConvolutionValiable;
+                var outputvariavble = model[model.LayerCount - 1].Variable as Function.Variable.ConvolutionValiable;
                 while (!Terminate)
                 {
                     #region ReadWeight 
@@ -66,9 +72,9 @@ namespace CNNPlatform
                             weight = new List<SharedObject.WeightData>(instance.Weignt);
                         }
                     }
-                    for (int i = 0; i < model.Layer.Count; i++)
+                    for (int i = 0; i < model.LayerCount; i++)
                     {
-                        model.Layer[i].Variable.UpdateParameter(weight[i]);
+                        model[i].Variable.UpdateParameter(weight[i]);
                         Difference[i] = weight[i].Difference;
                     }
                     #endregion
@@ -77,17 +83,18 @@ namespace CNNPlatform
                         inputvariavble.InWidth, inputvariavble.InHeight, inputvariavble.BatchCount, inputvariavble.InputChannels,
                         out inputvariavble.Input);
 
-                    for (int i = 0; i < model.Layer.Count; i++)
+                    for (int i = 0; i < model.LayerCount; i++)
                     {
-                        model.Layer[i].ForwardFunction.Do(model.Layer[i].Variable);
-                        if (i < model.Layer.Count - 1)
+                        model[i].ForwardFunction.Do(model[i].Variable);
+                        if (i < model.LayerCount - 1)
                         {
-                            (model.Layer[i + 1].Variable as Function.Variable.VariableBase).Input = (model.Layer[i].Variable as Function.Variable.VariableBase).Output;
+                            (model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
                         }
                     }
 
                     #endregion
-                    Components.Imaging.View.Show(outputvariavble.Output, "inference", inputvariavble.InWidth, inputvariavble.InHeight);
+                    //Components.Imaging.View.Show(outputvariavble.Output, "inference");
+                    Result = outputvariavble.Output.Clone() as Components.RNdMatrix;
                 }
                 using (var key = instance.Lock(Components.Locker.Priority.Critical))
                 {

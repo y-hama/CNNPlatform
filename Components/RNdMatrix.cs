@@ -172,6 +172,12 @@ namespace Components
             return matrix;
         }
 
+        public override RNdObject Abs()
+        {
+            var matrix = new RNdMatrix() { Data = ((Real[])Data.Clone()).Select(x => (Real)Math.Abs(x)).ToArray(), Shape = (int[])Shape.Clone() };
+            return matrix;
+        }
+
         //public override void Show(string name, int batchindex = 0)
         //{
         //    Cv2.ImShow(name, ArrayToMat(batchindex));

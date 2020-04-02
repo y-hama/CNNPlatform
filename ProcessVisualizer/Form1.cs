@@ -15,11 +15,8 @@ namespace ProcessVisualizer
         public Form1()
         {
             InitializeComponent();
-        }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, true, false, false, false });
+            Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false }, "4");
 
             var instance = Components.Locker.ObjectLocker.CreateClient(CNNPlatform.SharedObject.ChannelName, CNNPlatform.SharedObject.ObjectName) as CNNPlatform.SharedObject;
             bool check = false;
@@ -38,6 +35,27 @@ namespace ProcessVisualizer
 
             CNNPlatform.InferenceProcess.Core.Start(instance);
             timer1.Start();
+
+            new Task(() =>
+            {
+                Components.RNdMatrix result;
+                while (true)
+                {
+                    try
+                    {
+                        result = CNNPlatform.InferenceProcess.Result.Clone() as Components.RNdMatrix;
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+                    Components.Imaging.View.Show(result, "result");
+                }
+            }).Start();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -71,6 +89,7 @@ namespace ProcessVisualizer
             }
             catch (Exception)
             {
+                return;
             }
             if (diff.Count > 0)
             {
@@ -90,6 +109,7 @@ namespace ProcessVisualizer
                     chart1.Series[2].Points.AddXY(_gen[i], _err[i]);
                 }
             }
+
         }
     }
 }

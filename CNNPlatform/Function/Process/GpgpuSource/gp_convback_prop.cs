@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace CNNPlatform.Function.Process.GpgpuSource
 {
-    class gp_convback_kernel : Components.GPGPU.Function.SourceCode
+    class gp_convback_prop : Components.GPGPU.Function.SourceCode
     {
         protected override void ParameterConfigration()
         {
-            AddParameter("Input", ObjectType.Array, ElementType.FLOAT);
             AddParameter("Sigma", ObjectType.Array, ElementType.FLOAT);
-            AddParameter("dKernel", ObjectType.Array, ElementType.FLOAT);
+            AddParameter("WeightKernel", ObjectType.Array, ElementType.FLOAT);
+            AddParameter("Propagator", ObjectType.Array, ElementType.FLOAT);
 
             AddParameter("BatchCount", ObjectType.Value, ElementType.INT);
             AddParameter("InWidth", ObjectType.Value, ElementType.INT);
@@ -38,30 +38,27 @@ namespace CNNPlatform.Function.Process.GpgpuSource
         {
             GlobalID(3);
             AddMethodBody(@"
-                        int t = (int)(i2 / KernelArea);
-                        int s = i2 - t * (KernelArea);
-                        int _s = s - KernelSize, _t = t - KernelSize;
-                        int kidx = i0 * (OutputChannels * KernelLength) + i1 * KernelLength + i2;
-                        dKernel[kidx] = 0;
-                        for (int b = 0; b < BatchCount; b++)
+                        int y = (int)(i2 / InWidth);
+                        int x = i2 - y * InWidth;
+                        int pidx = i0 * InArea + i1 * InSize + i2;
+                        Propagator[pidx] = 0;
+                        for (int k = 0; k < KernelLength; k++)
                         {
-                            for (int i = 0; i < OutSize; i++)
+                            int t = k / KernelArea;
+                            int s = k - t * KernelArea;
+                            int ox = (int)(((float)x / OutScale) - KernelExpand * (s - KernelSize));
+                            int oy = (int)(((float)y / OutScale) - KernelExpand * (t - KernelSize));
+                            if (ox >= 0 && oy >= 0 && ox < OutWidth && oy < OutHeight)
                             {
-                                int oy = (int)(i / OutWidth);
-                                int ox = (int)(i - oy * OutWidth);
-                                int oidx = b * OutArea + i1 * OutSize + i;
-
-                                int _ix = (int)(((float)ox * OutScale) + _s * KernelExpand);
-                                int _iy = (int)(((float)oy * OutScale) + _t * KernelExpand);
-                                if (_ix >= 0 && _iy >= 0 && _ix < InWidth && _iy < InHeight)
+                                for (int och = 0; och < OutputChannels; och++)
                                 {
-                                    int _idx = b * InArea + i0 * InSize + _iy * InWidth + _ix;
-                                    dKernel[kidx] += Input[_idx] * Sigma[oidx];
+                                    int oidx = i0 * OutArea + och * OutSize + oy * OutWidth + ox;
+                                    int kidx = i1 * (OutputChannels * KernelLength) + och * KernelLength + k;
+                                    Propagator[pidx] += Sigma[oidx] * WeightKernel[kidx];
                                 }
                             }
                         }
 ");
         }
-
     }
 }

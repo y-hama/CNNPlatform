@@ -8,7 +8,7 @@ namespace CNNPlatform.Layer
 {
     class LayerBase
     {
-        public Components.GPGPU.ComputeVariable Variable { get; set; }
+        public Function.Variable.VariableBase Variable { get; set; }
 
         public Components.GPGPU.Function.FunctionBase ForwardFunction { get; set; }
         public Components.GPGPU.Function.FunctionBase BackFunction { get; set; }

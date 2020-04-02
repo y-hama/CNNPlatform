@@ -11,6 +11,7 @@ namespace CNNPlatform.Function.Process
     {
         protected override void CreateGpuSource()
         {
+            AddSource(new Process.GpgpuSource.gp_convfowd());
         }
 
         #region 
@@ -20,7 +21,7 @@ namespace CNNPlatform.Function.Process
         private int InHeight;
         private int InputChannels;
 
-        private double OutScale;
+        private float OutScale;
         private int OutWidth;
         private int OutHeight;
         private int OutputChannels;
@@ -55,7 +56,7 @@ namespace CNNPlatform.Function.Process
             InHeight = variable.InHeight;
             InputChannels = variable.InputChannels;
 
-            OutScale = variable.OutScale;
+            OutScale = (float)variable.OutScale;
             OutWidth = variable.OutWidth;
             OutHeight = variable.OutHeight;
             OutputChannels = variable.OutputChannels;
@@ -81,17 +82,16 @@ namespace CNNPlatform.Function.Process
 
         protected override void CpuFunction()
         {
-
-            Parallel(0, BatchCount, bcnt =>
+            Parallel(0, BatchCount, i0 =>
             {
-                Parallel(0, OutputChannels, och =>
+                Parallel(0, OutputChannels, i1 =>
                 {
-                    Parallel(0, OutSize, idx =>
+                    Parallel(0, OutSize, i2 =>
                     {
                         float output = 0;
-                        int y = (int)(idx / OutWidth);
-                        int x = idx - y * OutWidth;
-                        int otx = bcnt * OutArea + och * OutSize + idx;
+                        int y = (int)(i2 / OutWidth);
+                        int x = i2 - y * OutWidth;
+                        int otx = i0 * OutArea + i1 * OutSize + i2;
 
                         for (int k = 0; k < KernelLength; k++)
                         {
@@ -103,9 +103,9 @@ namespace CNNPlatform.Function.Process
                             {
                                 for (int ich = 0; ich < InputChannels; ich++)
                                 {
-                                    int itx = bcnt * InArea + ich * InSize + iy * InWidth + ix;
-                                    int ktx = ich * (OutputChannels * KernelLength) + och * KernelLength + k;
-                                    int btx = ich * OutputChannels + och;
+                                    int itx = i0 * InArea + ich * InSize + iy * InWidth + ix;
+                                    int ktx = ich * (OutputChannels * KernelLength) + i1 * KernelLength + k;
+                                    int btx = ich * OutputChannels + i1;
                                     output += Input[itx] * WeightKernel[ktx] + WeightBias[btx];
                                 }
                             }
@@ -118,6 +118,38 @@ namespace CNNPlatform.Function.Process
 
         protected override void GpuFunction()
         {
+            using (var _input = ConvertBuffer(Input))
+            using (var _output = ConvertBuffer(Output))
+            using (var _bias = ConvertBuffer(WeightBias))
+            using (var _kernel = ConvertBuffer(WeightKernel))
+            {
+                SetParameter(_input);
+                SetParameter(_output);
+                SetParameter(_bias);
+                SetParameter(_kernel);
+
+                SetParameter(BatchCount, ValueMode.INT);
+                SetParameter(InWidth, ValueMode.INT);
+                SetParameter(InHeight, ValueMode.INT);
+                SetParameter(InputChannels, ValueMode.INT);
+                SetParameter(OutScale, ValueMode.FLOAT);
+                SetParameter(OutWidth, ValueMode.INT);
+                SetParameter(OutHeight, ValueMode.INT);
+                SetParameter(OutputChannels, ValueMode.INT);
+                SetParameter(InSize, ValueMode.INT);
+                SetParameter(InArea, ValueMode.INT);
+                SetParameter(InTotal, ValueMode.INT);
+                SetParameter(OutSize, ValueMode.INT);
+                SetParameter(OutArea, ValueMode.INT);
+                SetParameter(OutTotal, ValueMode.INT);
+                SetParameter(KernelSize, ValueMode.INT);
+                SetParameter(KernelArea, ValueMode.INT);
+                SetParameter(KernelLength, ValueMode.INT);
+                SetParameter(KernelExpand, ValueMode.INT);
+
+                Execute(BatchCount, OutputChannels, OutSize);
+                ReadBuffer(_output, ref Output);
+            }
         }
     }
 }

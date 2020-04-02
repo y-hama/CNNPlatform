@@ -11,6 +11,9 @@ namespace CNNPlatform.Function.Process
     {
         protected override void CreateGpuSource()
         {
+            AddSource(new Process.GpgpuSource.gp_convback_bias());
+            AddSource(new Process.GpgpuSource.gp_convback_kernel());
+            AddSource(new Process.GpgpuSource.gp_convback_prop());
             BiasOptimizer = new Optimizer.Adam();
             KernelOptimizer = new Optimizer.Adam();
         }
@@ -25,7 +28,7 @@ namespace CNNPlatform.Function.Process
         private int InHeight;
         private int InputChannels;
 
-        private double OutScale;
+        private float OutScale;
         private int OutWidth;
         private int OutHeight;
         private int OutputChannels;
@@ -68,7 +71,7 @@ namespace CNNPlatform.Function.Process
             InHeight = variable.InHeight;
             InputChannels = variable.InputChannels;
 
-            OutScale = variable.OutScale;
+            OutScale = (float)variable.OutScale;
             OutWidth = variable.OutWidth;
             OutHeight = variable.OutHeight;
             OutputChannels = variable.OutputChannels;
@@ -115,7 +118,6 @@ namespace CNNPlatform.Function.Process
                             dBias[bidx] += Sigma[oidx];
                         }
                     }
-
                 });
             });
 
@@ -126,8 +128,8 @@ namespace CNNPlatform.Function.Process
                 {
                     Parallel(0, KernelLength, i2 =>
                     {
-                        int s = (int)(i2 / KernelArea);
-                        int t = i2 - s * (KernelArea);
+                        int t = (int)(i2 / KernelArea);
+                        int s = i2 - t * (KernelArea);
                         int _s = s - KernelSize, _t = t - KernelSize;
                         int kidx = i0 * (OutputChannels * KernelLength) + i1 * KernelLength + i2;
                         dKernel[kidx] = 0;
@@ -152,15 +154,15 @@ namespace CNNPlatform.Function.Process
                 });
             });
 
-            Parallel(0, BatchCount, b =>
+            Parallel(0, BatchCount, i0 =>
             {
-                Parallel(0, InputChannels, ich =>
+                Parallel(0, InputChannels, i1 =>
                 {
-                    Parallel(0, InSize, idx =>
+                    Parallel(0, InSize, i2 =>
                     {
-                        int y = (int)(idx / InWidth);
-                        int x = idx - y * InWidth;
-                        int pidx = b * InArea + ich * InSize + idx;
+                        int y = (int)(i2 / InWidth);
+                        int x = i2 - y * InWidth;
+                        int pidx = i0 * InArea + i1 * InSize + i2;
                         Propagator[pidx] = 0;
                         for (int k = 0; k < KernelLength; k++)
                         {
@@ -172,8 +174,8 @@ namespace CNNPlatform.Function.Process
                             {
                                 for (int och = 0; och < OutputChannels; och++)
                                 {
-                                    int oidx = b * OutArea + och * OutSize + oy * OutWidth + ox;
-                                    int kidx = ich * (OutputChannels * KernelLength) + och * KernelLength + k;
+                                    int oidx = i0 * OutArea + och * OutSize + oy * OutWidth + ox;
+                                    int kidx = i1 * (OutputChannels * KernelLength) + och * KernelLength + k;
                                     Propagator[pidx] += Sigma[oidx] * WeightKernel[kidx];
                                 }
                             }
@@ -185,7 +187,102 @@ namespace CNNPlatform.Function.Process
 
         protected override void GpuFunction()
         {
-            throw new NotImplementedException();
+            dBias = (Components.Real[])WeightBias.Clone();
+
+            SwitchSellection(GpuSource[0].Name);
+            using (var _sigma = ConvertBuffer(Sigma))
+            using (var _dbias = ConvertBuffer(dBias))
+            {
+                SetParameter(_sigma);
+                SetParameter(_dbias);
+
+                SetParameter(BatchCount, ValueMode.INT);
+                SetParameter(InWidth, ValueMode.INT);
+                SetParameter(InHeight, ValueMode.INT);
+                SetParameter(InputChannels, ValueMode.INT);
+                SetParameter(OutScale, ValueMode.FLOAT);
+                SetParameter(OutWidth, ValueMode.INT);
+                SetParameter(OutHeight, ValueMode.INT);
+                SetParameter(OutputChannels, ValueMode.INT);
+                SetParameter(InSize, ValueMode.INT);
+                SetParameter(InArea, ValueMode.INT);
+                SetParameter(InTotal, ValueMode.INT);
+                SetParameter(OutSize, ValueMode.INT);
+                SetParameter(OutArea, ValueMode.INT);
+                SetParameter(OutTotal, ValueMode.INT);
+                SetParameter(KernelSize, ValueMode.INT);
+                SetParameter(KernelArea, ValueMode.INT);
+                SetParameter(KernelLength, ValueMode.INT);
+                SetParameter(KernelExpand, ValueMode.INT);
+
+                Execute(InputChannels, OutputChannels);
+                ReadBuffer(_dbias, ref dBias);
+            }
+
+            dKernel = (Components.Real[])WeightKernel.Clone();
+            SwitchSellection(GpuSource[1].Name);
+            using (var _input = ConvertBuffer(Input))
+            using (var _sigma = ConvertBuffer(Sigma))
+            using (var _dkernel = ConvertBuffer(dKernel))
+            {
+                SetParameter(_input);
+                SetParameter(_sigma);
+                SetParameter(_dkernel);
+
+                SetParameter(BatchCount, ValueMode.INT);
+                SetParameter(InWidth, ValueMode.INT);
+                SetParameter(InHeight, ValueMode.INT);
+                SetParameter(InputChannels, ValueMode.INT);
+                SetParameter(OutScale, ValueMode.FLOAT);
+                SetParameter(OutWidth, ValueMode.INT);
+                SetParameter(OutHeight, ValueMode.INT);
+                SetParameter(OutputChannels, ValueMode.INT);
+                SetParameter(InSize, ValueMode.INT);
+                SetParameter(InArea, ValueMode.INT);
+                SetParameter(InTotal, ValueMode.INT);
+                SetParameter(OutSize, ValueMode.INT);
+                SetParameter(OutArea, ValueMode.INT);
+                SetParameter(OutTotal, ValueMode.INT);
+                SetParameter(KernelSize, ValueMode.INT);
+                SetParameter(KernelArea, ValueMode.INT);
+                SetParameter(KernelLength, ValueMode.INT);
+                SetParameter(KernelExpand, ValueMode.INT);
+
+                Execute(InputChannels, OutputChannels, KernelLength);
+                ReadBuffer(_dkernel, ref dKernel);
+            }
+
+            SwitchSellection(GpuSource[2].Name);
+            using (var _sigma = ConvertBuffer(Sigma))
+            using (var _kernel = ConvertBuffer(WeightKernel))
+            using (var _propagator = ConvertBuffer(Propagator))
+            {
+                SetParameter(_sigma);
+                SetParameter(_kernel);
+                SetParameter(_propagator);
+
+                SetParameter(BatchCount, ValueMode.INT);
+                SetParameter(InWidth, ValueMode.INT);
+                SetParameter(InHeight, ValueMode.INT);
+                SetParameter(InputChannels, ValueMode.INT);
+                SetParameter(OutScale, ValueMode.FLOAT);
+                SetParameter(OutWidth, ValueMode.INT);
+                SetParameter(OutHeight, ValueMode.INT);
+                SetParameter(OutputChannels, ValueMode.INT);
+                SetParameter(InSize, ValueMode.INT);
+                SetParameter(InArea, ValueMode.INT);
+                SetParameter(InTotal, ValueMode.INT);
+                SetParameter(OutSize, ValueMode.INT);
+                SetParameter(OutArea, ValueMode.INT);
+                SetParameter(OutTotal, ValueMode.INT);
+                SetParameter(KernelSize, ValueMode.INT);
+                SetParameter(KernelArea, ValueMode.INT);
+                SetParameter(KernelLength, ValueMode.INT);
+                SetParameter(KernelExpand, ValueMode.INT);
+
+                Execute(BatchCount, InputChannels, InSize);
+                ReadBuffer(_propagator, ref Propagator);
+            }
         }
 
         protected override bool UpdateConditionCheck()
@@ -195,8 +292,8 @@ namespace CNNPlatform.Function.Process
 
         public override void Update()
         {
-            Difference[0] = BiasOptimizer.Update(ref WeightBias, dBias, (rho / (BatchCount)));
-            Difference[1] = KernelOptimizer.Update(ref WeightKernel, dKernel, (rho / (BatchCount * KernelLength)));
+            Difference[0] = BiasOptimizer.Update(ref WeightBias, dBias, (OutScale == 0 ? 1 : 1.0 / OutScale) * (rho / (BatchCount)));
+            Difference[1] = KernelOptimizer.Update(ref WeightKernel, dKernel, (OutScale == 0 ? 1 : 1.0 / OutScale) * (rho / (BatchCount * KernelLength)));
         }
     }
 }

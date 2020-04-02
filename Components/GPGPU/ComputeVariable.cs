@@ -111,16 +111,5 @@ namespace Components.GPGPU
                 Infomation = new ParameterSet.Infomations(array),
             });
         }
-
-        protected abstract void ConfirmField(object shared);
-        public ComputeVariable Confirm(object shared)
-        {
-            ConfirmField(shared);
-            return this;
-        }
-
-        public abstract void UpdateParameter(object parameter);
-        public abstract void OverwriteParameter(ref object parameter);
-
     }
 }

@@ -90,6 +90,8 @@ namespace Components.GPGPU
 
         private bool PlatformInitialized { get; set; }
         private List<GpuPlatform> Processors { get; set; }
+
+        private string SharedMethodSource { get; set; } = string.Empty;
         #endregion
 
         #region PrivateMethod
@@ -125,8 +127,8 @@ namespace Components.GPGPU
                     }
                     var types = asm.GetTypes();
 
-                    string sharedmethod = string.Empty;
                     #region SharedMethod
+                    string sharedmethod = string.Empty;
                     foreach (var item in types)
                     {
                         if (SharedNameSpaceList.Contains(item.Namespace))
@@ -137,6 +139,7 @@ namespace Components.GPGPU
                         }
                     }
                     #endregion
+                    SharedMethodSource = sharedmethod;
 
                     List<Function.FunctionBase> fList = new List<Function.FunctionBase>();
                     foreach (var item in types)
@@ -147,18 +150,19 @@ namespace Components.GPGPU
                         }
                     }
 
-                    foreach (var item in fList)
-                    {
-                        if (item.IsGpuProcess)
-                        {
-                            var sourceList = item.GetSourceList();
-                            foreach (var source in sourceList)
-                            {
-                                //Console.WriteLine(sharedmethod + source.Item2 + "\n");
-                                Build(source.Item1, sharedmethod + source.Item2);
-                            }
-                        }
-                    }
+                    // FunctionBase作成時にビルドを実行するため、以下は不要となった
+                    //foreach (var item in fList)
+                    //{
+                    //    if (item.IsGpuProcess)
+                    //    {
+                    //        var sourceList = item.GetSourceList();
+                    //        foreach (var source in sourceList)
+                    //        {
+                    //            //Console.WriteLine(sharedmethod + source.Item2 + "\n");
+                    //            Build(source.Item1, sharedmethod + source.Item2);
+                    //        }
+                    //    }
+                    //}
                     #endregion
                 }
             }
@@ -216,7 +220,12 @@ namespace Components.GPGPU
             foreach (var item in function)
             {
                 var option = GetOption(item.Name);
-                if (option == null) { State.ExceptionState(new NullReferenceException()); }
+                if (option == null)
+                {
+                    Build(item.Name, SharedMethodSource + "\n" + item.Source);
+                    option = GetOption(item.Name);
+                    list.Add(option);
+                }
                 else { list.Add(option); }
             }
             return list;

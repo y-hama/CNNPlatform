@@ -15,24 +15,10 @@ namespace CNNPlatform.Model
 
         public Model TestModel(int batchcount = 1)
         {
-            var model = new CNNPlatform.Model.Model();
-            model.Layer.Add(new Layer.Convolution()
-            {
-                Variable = new Function.Variable.ConvolutionValiable()
-                {
-                    BatchCount = batchcount,
-                    InputChannels = 3,
-                    InWidth = 80,
-                    InHeight = 60,
+            var model = new CNNPlatform.Model.Model(batchcount, 320, 240, 3);
+            model.AddConvolution(Instance, outch: 6, kernelsize: 2, expand: 1);
+            model.AddConvolution(Instance, outch: 3, kernelsize: 1, expand: 2);
 
-                    OutputChannels = 3,
-                    OutScale = 1,
-
-                    KernelSize = 3,
-                    KernelExpand = 1,
-                    Rho = 0.001,
-                }.Confirm(Instance),
-            });
             return model;
         }
     }

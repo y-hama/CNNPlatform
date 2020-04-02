@@ -8,8 +8,28 @@ namespace CNNPlatform
 {
     class Program
     {
-        static void Main(string[] args)
+        /// <summary>
+        /// アプリケーションのメイン エントリ ポイントです。
+        /// </summary>
+        [STAThread]
+        internal static void Main(string[] args)
         {
+            if (args.Length == 0)
+            {
+            }
+            else
+            {
+                if (args.Length == 1)
+                {
+                    uint bcnt;
+                    if (UInt32.TryParse(args[0], out bcnt))
+                    {
+                        LearningProcess.Core.BatchCount = bcnt > 0 ? (int)bcnt : 1;
+                    }
+                    else { throw new Exception(); }
+                }
+            }
+            LearningProcess.Core.Start();
         }
     }
 }

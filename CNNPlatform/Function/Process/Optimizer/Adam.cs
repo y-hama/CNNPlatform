@@ -15,15 +15,16 @@ namespace CNNPlatform.Function.Process.Optimizer
         private Components.Real[] v { get; set; }
         private Components.Real t { get; set; }
 
-        private const double a = 0.001;
+        private const double a = 0.002;
         private const double b1 = 0.9;
         private const double b2 = 0.999;
         private const double eps = 1e-8;
 
-        public override double Update(ref Real[] w, Real[] diff, double rho)
+        public override double Update(ref Real[] w, Real[] diff, double rho = 0)
         {
             if (!Initialize)
             {
+                Initialize = true;
                 m = new Real[w.Length];
                 v = new Real[w.Length];
                 t = 0;

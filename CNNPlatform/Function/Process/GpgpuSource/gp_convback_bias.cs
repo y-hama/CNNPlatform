@@ -10,33 +10,43 @@ namespace CNNPlatform.Function.Process.GpgpuSource
     {
         protected override void ParameterConfigration()
         {
-            AddParameter("sigma", ObjectType.Array, ElementType.FLOAT);
-            AddParameter("dbias", ObjectType.Array, ElementType.FLOAT);
+            AddParameter("Sigma", ObjectType.Array, ElementType.FLOAT);
+            AddParameter("dBias", ObjectType.Array, ElementType.FLOAT);
 
-            AddParameter("batch", ObjectType.Value, ElementType.INT);
-            AddParameter("ich", ObjectType.Value, ElementType.INT);
-            AddParameter("och", ObjectType.Value, ElementType.INT);
-            AddParameter("OutTotalArea", ObjectType.Value, ElementType.INT);
-            AddParameter("OutTotalSize", ObjectType.Value, ElementType.INT);
-            AddParameter("klength", ObjectType.Value, ElementType.INT);
-            AddParameter("InTotalSize", ObjectType.Value, ElementType.INT);
+            AddParameter("BatchCount", ObjectType.Value, ElementType.INT);
+            AddParameter("InWidth", ObjectType.Value, ElementType.INT);
+            AddParameter("InHeight", ObjectType.Value, ElementType.INT);
+            AddParameter("InputChannels", ObjectType.Value, ElementType.INT);
+            AddParameter("OutScale", ObjectType.Value, ElementType.FLOAT);
+            AddParameter("OutWidth", ObjectType.Value, ElementType.INT);
+            AddParameter("OutHeight", ObjectType.Value, ElementType.INT);
+            AddParameter("OutputChannels", ObjectType.Value, ElementType.INT);
+            AddParameter("InSize", ObjectType.Value, ElementType.INT);
+            AddParameter("InArea", ObjectType.Value, ElementType.INT);
+            AddParameter("InTotal", ObjectType.Value, ElementType.INT);
+            AddParameter("OutSize", ObjectType.Value, ElementType.INT);
+            AddParameter("OutArea", ObjectType.Value, ElementType.INT);
+            AddParameter("OutTotal", ObjectType.Value, ElementType.INT);
+            AddParameter("KernelSize", ObjectType.Value, ElementType.INT);
+            AddParameter("KernelArea", ObjectType.Value, ElementType.INT);
+            AddParameter("KernelLength", ObjectType.Value, ElementType.INT);
+            AddParameter("KernelExpand", ObjectType.Value, ElementType.INT);
         }
 
         protected override void CreateSource()
         {
             GlobalID(2);
             AddMethodBody(@"
-                    int tbidx = i0 * (och) + i1;
-                    dbias[tbidx] = 0;
-                    for (int b = 0; b < batch; b++)
+                    int bidx = i0 * OutputChannels + i1;
+                    dBias[bidx] = 0;
+                    for (int b = 0; b < BatchCount; b++)
                     {
-                        for (int i = 0; i < OutTotalSize; i++)
+                        for (int i = 0; i < OutSize; i++)
                         {
-                            int toidx = b * OutTotalArea + i1 * OutTotalSize + i;
-                            dbias[tbidx] += sigma[toidx];
+                            int oidx = b * OutArea + i1 * OutSize + i;
+                            dBias[bidx] += Sigma[oidx];
                         }
                     }
-                    dbias[tbidx] /= ich * klength * InTotalSize * batch;
 ");
         }
 

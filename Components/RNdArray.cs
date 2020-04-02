@@ -62,6 +62,12 @@ namespace Components
             return array;
         }
 
+        public override RNdObject Abs()
+        {
+            var array = new RNdArray() { Data = ((Real[])Data.Clone()).Select(x => (Real)Math.Abs(x)).ToArray(), Shape = (int[])Shape.Clone() };
+            return array;
+        }
+
         public Real this[int idx]
         {
             get { return Data[idx]; }

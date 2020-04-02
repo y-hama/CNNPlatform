@@ -202,7 +202,7 @@ namespace Components.GPGPU.Function
                 Kernel = new List<ComputeKernel>();
                 Queue = new List<ComputeCommandQueue>();
                 GpuParameter = new List<List<GpuParamSet>>();
-                var option = GPGPU.Core.Instance.GetOption(GpuSource);
+                var option = GPGPU.Core.Instance.GetOption(GpuSource); 
                 foreach (var item in option)
                 {
                     Context.Add(item.Context);

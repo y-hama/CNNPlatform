@@ -7,80 +7,177 @@ using System.Diagnostics;
 
 namespace CNNPlatform
 {
-    static class LearningProcess
+    class LearningProcess
     {
-        /// <summary>
-        /// アプリケーションのメイン エントリ ポイントです。
-        /// </summary>
-        [STAThread]
-        internal static void Main(string[] args)
-        {
-            Initializer.Startup();
+        private LearningProcess() { }
+        public static LearningProcess Core { get; private set; } = new LearningProcess();
 
+        public int BatchCount { get; set; } = 1;
+
+        private class BufferingData
+        {
+            private BufferingData() { }
+            public static BufferingData Instance { get; } = new BufferingData();
+
+            public System.Threading.CountdownEvent Signal { get; set; } = new System.Threading.CountdownEvent(1);
+
+            public double Error { get; set; }
+            public List<SharedObject.WeightData> Weignt { get; set; } = new List<SharedObject.WeightData>();
+        }
+
+        private class ImageData
+        {
+            private ImageData() { }
+            public static ImageData Instance { get; } = new ImageData();
+            public System.Threading.CountdownEvent LoadSignal { get; set; } = new System.Threading.CountdownEvent(1);
+            public System.Threading.CountdownEvent ResetSignal { get; set; } = new System.Threading.CountdownEvent(1);
+
+            public Components.RNdMatrix Input { get; set; }
+            public Components.RNdMatrix Teacher { get; set; }
+        }
+
+        public void Start()
+        {
             // Learningを実施する
             // LockServerとして動作する
+            // GPUを使用する
 
+            Initializer.Startup();
+
+            Console.WriteLine(BatchCount);
             var instance = (SharedObject)Components.Locker.ObjectLocker.CreateServer(SharedObject.ChannelName, SharedObject.ObjectName, typeof(SharedObject));
             Model.Creater.Core.Instance = instance;
-            var model = Model.Creater.Core.TestModel(16);
+            var model = Model.Creater.Core.TestModel(BatchCount);
 
-            var inputvariavble = model.Layer[0].Variable as Function.Variable.VariableBase;
-            var outputvariavble = model.Layer[model.Layer.Count - 1].Variable as Function.Variable.VariableBase;
+            var inputvariavble = model[0].Variable as Function.Variable.VariableBase;
+            var outputvariavble = model[model.LayerCount - 1].Variable as Function.Variable.VariableBase;
 
             using (instance.Lock())
             {
                 instance.Initialized = true;
+                BufferingData.Instance.Weignt = new List<SharedObject.WeightData>(instance.Weignt);
             }
 
-            Components.Imaging.FileLoader.Instance.SetLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
-            Components.RNdMatrix teacher;
-            while (!Initializer.Terminate)
+            #region OverwriteProcess
+            new Task(() =>
             {
-                #region LearningProcess
-                Components.Imaging.FileLoader.Instance.LoadImage(
-                    inputvariavble.InWidth, inputvariavble.InHeight, outputvariavble.OutWidth, outputvariavble.OutHeight, inputvariavble.BatchCount,
-                    inputvariavble.InputChannels, outputvariavble.OutputChannels, out inputvariavble.Input, out teacher);
-                for (int i = 0; i < model.Layer.Count; i++)
+                while (!Initializer.Terminate)
                 {
-                    model.Layer[i].ForwardFunction.Do(model.Layer[i].Variable);
-                    if (i < model.Layer.Count - 1)
+                    BufferingData.Instance.Signal.Wait();
+                    using (instance.Lock())
                     {
-                        (model.Layer[i + 1].Variable as Function.Variable.VariableBase).Input = (model.Layer[i].Variable as Function.Variable.VariableBase).Output;
+                        Initializer.Terminate = instance.ExitApplication;
+                        instance.Generation = Initializer.Generatiion;
+                        instance.Error = BufferingData.Instance.Error;
+                        instance.Weignt = new List<SharedObject.WeightData>(BufferingData.Instance.Weignt);
                     }
+                    BufferingData.Instance.Signal.Reset();
                 }
-                outputvariavble.Sigma = outputvariavble.Output - teacher;
-                for (int i = model.Layer.Count - 1; i >= 0; i--)
+            })
+#if true
+            .Start()
+#endif
+            ;
+            #endregion
+
+            #region ImageLoadProcess
+            new Task(() =>
+            {
+                Components.RNdMatrix i, t;
+                while (!Initializer.Terminate)
                 {
-                    model.Layer[i].BackFunction.Do(model.Layer[i].Variable);
-                    if (i > 0)
+                    ImageData.Instance.LoadSignal.Reset();
+                    ImageData.Instance.ResetSignal.Reset();
+                    Components.Imaging.FileLoader.Instance.LoadImage(
+                        inputvariavble.InWidth, inputvariavble.InHeight, outputvariavble.OutWidth, outputvariavble.OutHeight, inputvariavble.BatchCount,
+                        inputvariavble.InputChannels, outputvariavble.OutputChannels, out i, out t);
+                    ImageData.Instance.Input = i;
+                    ImageData.Instance.Teacher = t;
+                    ImageData.Instance.LoadSignal.Signal();
+                    ImageData.Instance.ResetSignal.Wait();
+                }
+            })
+#if true
+            .Start()
+#endif
+            ;
+            #endregion
+
+            Components.Imaging.FileLoader.Instance.SetLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
+            inputvariavble.Input = new Components.RNdMatrix(inputvariavble.Propagator.Shape);
+            Components.RNdMatrix teacher = new Components.RNdMatrix(outputvariavble.Output.Shape);
+            //new Task(() =>
+            {
+                while (!Initializer.Terminate)
+                {
+                    ImageData.Instance.LoadSignal.Wait();
+                    inputvariavble.Input.Data = ImageData.Instance.Input.Data.Clone() as Components.Real[];
+                    teacher.Data = ImageData.Instance.Teacher.Data.Clone() as Components.Real[];
+                    ImageData.Instance.ResetSignal.Signal();
+
+                    #region LearningProcess
+                    for (int i = 0; i < model.LayerCount; i++)
                     {
-                        (model.Layer[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model.Layer[i].Variable as Function.Variable.VariableBase).Propagator;
+                        model[i].ForwardFunction.Do(model[i].Variable);
+                        if (i < model.LayerCount - 1)
+                        {
+                            (model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
+                        }
                     }
-                }
-                var error = 0.0;
-                for (int i = 0; i < outputvariavble.Sigma.Data.Length; i++)
-                {
-                    error += Math.Abs(outputvariavble.Sigma.Data[i]);
-                }
-                error /= outputvariavble.Sigma.Length;
-                #endregion
-                Components.Imaging.View.Show(inputvariavble.Input, "Input...", 0, 0);
-                Components.Imaging.View.Show(outputvariavble.Output, "learning...", 0, inputvariavble.InHeight);
-                Components.Imaging.View.Show(outputvariavble.Sigma, "sigma...", inputvariavble.InWidth, 0);
-                Initializer.Generatiion++;
-                using (instance.Lock())
-                {
-                    instance.Generation = Initializer.Generatiion;
-                    instance.Error = error;
-                    for (int i = 0; i < model.Layer.Count; i++)
+                    outputvariavble.Sigma = outputvariavble.Output - teacher;
+                    for (int i = model.LayerCount - 1; i >= 0; i--)
                     {
-                        var _weight = (object)instance.Weignt[i];
-                        model.Layer[i].Variable.OverwriteParameter(ref _weight);
+                        model[i].BackFunction.Do(model[i].Variable);
+                        if (i > 0)
+                        {
+                            (model[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model[i].Variable as Function.Variable.VariableBase).Propagator;
+                        }
                     }
-                    Initializer.Terminate = instance.ExitApplication;
+                    var error = 0.0;
+                    for (int i = 0; i < outputvariavble.Sigma.Data.Length; i++)
+                    {
+                        error += Math.Abs(outputvariavble.Sigma.Data[i]);
+                    }
+                    error /= outputvariavble.Sigma.Length;
+                    #endregion
+
+                    Components.Imaging.View.Show(
+                        new Components.RNdMatrix[] { inputvariavble.Input, outputvariavble.Output, teacher, (Components.RNdMatrix)outputvariavble.Sigma.Abs() },
+                        "learning...");
+
+                    Initializer.Generatiion++;
+
+                    #region Overwrite Signal
+#if true
+                    if (BufferingData.Instance.Signal.CurrentCount == BufferingData.Instance.Signal.InitialCount)
+                    {
+                        BufferingData.Instance.Error = error;
+                        for (int i = 0; i < model.LayerCount; i++)
+                        {
+                            var _weight = (object)BufferingData.Instance.Weignt[i];
+                            model[i].Variable.OverwriteParameter(ref _weight);
+                        }
+                        BufferingData.Instance.Signal.Signal();
+                    }
+#else
+                    using (instance.Lock())
+                    {
+                        Initializer.Terminate = instance.ExitApplication;
+                        instance.Generation = Initializer.Generatiion;
+                        instance.Error = error;
+                        for (int i = 0; i < model.LayerCount; i++)
+                        {
+                            var _weight = (object)instance.Weignt[i];
+                            model[i].Variable.OverwriteParameter(ref _weight);
+                        }
+                    }
+#endif
+                    #endregion
+
+                    GC.Collect();
                 }
-                Console.WriteLine(Initializer.Generatiion);
             }
+            //).Start();
         }
     }
 }

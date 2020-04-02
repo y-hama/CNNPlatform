@@ -36,6 +36,8 @@ namespace Components
             return true;
         }
 
+        public abstract RNdObject Abs();
+
         public abstract RNdObject Clone();
         //public abstract void Show(string name, int batchindex = 0);
 

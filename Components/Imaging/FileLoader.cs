@@ -22,7 +22,6 @@ namespace Components.Imaging
 
         private System.IO.DirectoryInfo Directory { get; set; }
 
-
         public void SetLocation(System.IO.DirectoryInfo info)
         {
             if (!info.Exists) { throw new Exception(); }
@@ -42,10 +41,10 @@ namespace Components.Imaging
                 var index = State.RandomSource.Next(flist.Count);
                 var mat = new Mat(flist[index].FullName);
                 var sframe = mat.Clone();
-                if (outchannels != sframe.Channels())
+                if (inchannels != sframe.Channels())
                 {
-                    if (outchannels == 1) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.BGR2GRAY); }
-                    else if (outchannels == 3) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.GRAY2BGR); }
+                    if (inchannels == 1) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.BGR2GRAY); }
+                    else if (inchannels == 3) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.GRAY2BGR); }
                     else { throw new Exception(); }
                 }
                 sframe = sframe.Resize(new Size(inw, inh));
@@ -69,10 +68,11 @@ namespace Components.Imaging
         private Mat Effect(Mat source)
         {
             Mat frame = source.Clone();
-            //Cv2.Laplacian(source, frame, source.Type());
 
-            //Cv2.AddWeighted(source, 0.25, frame, 0.75, 1, frame);
-            
+            double rho = 0.4;
+            Cv2.Laplacian(source, frame, source.Type());
+            Cv2.AddWeighted(source, rho, frame, (1 - rho), 1, frame);
+
             return frame;
         }
     }
