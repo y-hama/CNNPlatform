@@ -45,7 +45,6 @@
             // 
             // chart1
             // 
-            chartArea1.AxisX.Minimum = 0D;
             chartArea1.AxisY.Interval = 0.125D;
             chartArea1.AxisY.Maximum = 0.5D;
             chartArea1.AxisY2.Interval = 0.025D;
