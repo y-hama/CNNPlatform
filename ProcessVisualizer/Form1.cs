@@ -16,7 +16,7 @@ namespace ProcessVisualizer
         {
             InitializeComponent();
 
-            Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false }, "4");
+            Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false }, "8");
 
             var instance = Components.Locker.ObjectLocker.CreateClient(CNNPlatform.SharedObject.ChannelName, CNNPlatform.SharedObject.ObjectName) as CNNPlatform.SharedObject;
             bool check = false;
