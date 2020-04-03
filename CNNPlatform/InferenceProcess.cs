@@ -34,23 +34,37 @@ namespace CNNPlatform
         private InferenceProcess() { }
         public static InferenceProcess Core { get; private set; } = new InferenceProcess();
 
-        public void Start(Components.Locker.ObjectLocker.Exclusive _instance)
+        public void Start()
         {
             // Inferenceを実施する
             // LockClientとして動作する
             // GPUを使用しない
 
+            var instance = Components.Locker.ObjectLocker.CreateClient(CNNPlatform.Utility.Shared.ModelParameter.ChannelName, CNNPlatform.Utility.Shared.ModelParameter.ObjectName) as CNNPlatform.Utility.Shared.ModelParameter;
+            bool check = false;
+            while (!check)
+            {
+                System.Threading.Thread.Sleep(1000);
+                try
+                {
+                    using (instance.Lock(Components.Locker.Priority.Critical))
+                    {
+                        check = instance.Initialized;
+                    }
+                }
+                catch (Exception) { }
+            }
+
             ModelGeneration = 0;
-            var instance = (SharedObject)_instance;
-            new Task(() =>
+            //new Task(() =>
             {
                 running = true;
                 var model = Model.Creater.Core.TestModel();
-                List<SharedObject.WeightData> weight;
+                List<Utility.Shared.ModelParameter.WeightData> weight;
                 using (instance.Lock())
                 {
                     ModelGeneration = instance.Generation;
-                    weight = new List<SharedObject.WeightData>(instance.Weignt);
+                    weight = new List<Utility.Shared.ModelParameter.WeightData>(instance.Weignt);
                 }
                 for (int i = 0; i < model.LayerCount; i++)
                 {
@@ -69,7 +83,7 @@ namespace CNNPlatform
                         {
                             ModelGeneration = instance.Generation;
                             LearningError = instance.Error;
-                            weight = new List<SharedObject.WeightData>(instance.Weignt);
+                            weight = new List<Utility.Shared.ModelParameter.WeightData>(instance.Weignt);
                         }
                     }
                     for (int i = 0; i < model.LayerCount; i++)
@@ -93,15 +107,16 @@ namespace CNNPlatform
                     }
 
                     #endregion
-                    //Components.Imaging.View.Show(outputvariavble.Output, "inference");
+                    Components.Imaging.View.Show(outputvariavble.Output, "inference");
                     Result = outputvariavble.Output.Clone() as Components.RNdMatrix;
                 }
                 using (var key = instance.Lock(Components.Locker.Priority.Critical))
                 {
-                    instance.ExitApplication = true;
+                    //instance.ExitApplication = true;
                 }
                 TerminatedSignal.Signal();
-            }).Start();
+            }
+            //).Start();
         }
     }
 }

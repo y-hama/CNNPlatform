@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CNNPlatform.Utility
 {
-    static class Randomizer
+    internal static class Randomizer
     {
         private static object ___lockobj = new object();
         private static Random random { get; set; } = new Random();

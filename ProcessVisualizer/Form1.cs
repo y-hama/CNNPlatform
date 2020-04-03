@@ -8,48 +8,72 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using CNNPlatform.Utility.Shared;
+
 namespace ProcessVisualizer
 {
     public partial class Form1 : Form
     {
+        private ProcessParameter Instance { get; set; }
+        private int Generagion { get; set; }
+
         public Form1()
         {
             InitializeComponent();
 
-            Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false }, "8");
+            //Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false }, "1 inference");
+            //Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { false, false, false, false, false, true, true, false }, "8 learning");
 
-            var instance = Components.Locker.ObjectLocker.CreateClient(CNNPlatform.SharedObject.ChannelName, CNNPlatform.SharedObject.ObjectName) as CNNPlatform.SharedObject;
+            Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false });
+
+            Instance = Components.Locker.ObjectLocker.CreateClient(ProcessParameter.ChannelName, ProcessParameter.ObjectName) as ProcessParameter;
             bool check = false;
             while (!check)
             {
                 System.Threading.Thread.Sleep(1000);
                 try
                 {
-                    using (instance.Lock(Components.Locker.Priority.Critical))
+                    using (Instance.Lock(Components.Locker.Priority.Critical))
                     {
-                        check = instance.Initialized;
+                        check = true;
                     }
                 }
-                catch (Exception) { }
+                catch (Exception)
+                { /* 繋がるまでリトライを繰り返す */ }
             }
 
-            CNNPlatform.InferenceProcess.Core.Start(instance);
             timer1.Start();
 
             new Task(() =>
             {
-                Components.RNdMatrix result;
+                Components.RNdMatrix result = null;
                 while (true)
                 {
+                    bool getlock = false;
                     try
                     {
-                        result = CNNPlatform.InferenceProcess.Result.Clone() as Components.RNdMatrix;
+                        using (var key = Instance.LockThrow())
+                        {
+                            if (key != null)
+                            {
+                                getlock = true;
+                                if (Instance.Result != null)
+                                {
+                                    if (result == null) { result = new Components.RNdMatrix(Instance.Result.Shape); }
+                                    Instance.Result.CopyTo(result);
+                                }
+                                Generagion = Instance.Generagion;
+                            }
+                        }
                     }
                     catch (Exception)
                     {
                         continue;
                     }
-                    Components.Imaging.View.Show(result, "result");
+                    if (getlock && result != null)
+                    {
+                        Components.Imaging.View.Show(result, "result");
+                    }
                 }
             }).Start();
         }
@@ -60,7 +84,10 @@ namespace ProcessVisualizer
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            CNNPlatform.InferenceProcess.Terminate = true;
+            using (Instance.Lock(Components.Locker.Priority.Critical))
+            {
+                Instance.ExitApplication = true;
+            }
         }
 
         int gen = 0;

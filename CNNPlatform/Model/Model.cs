@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using CNNPlatform.Utility.Shared;
+
 namespace CNNPlatform.Model
 {
     class Model
@@ -35,7 +37,7 @@ namespace CNNPlatform.Model
             Layer.Add(layer);
         }
 
-        public void AddConvolution(SharedObject instance, int outch, int kernelsize, int expand, double rho = 0.001, double scale = 1)
+        public void AddConvolution(ModelParameter instance, int outch, int kernelsize, int expand, double rho = 0.001, double scale = 1)
         {
             int inw = InputWidth, inh = InputHeight, inch = InputChannels;
             if (LayerCount != 0)

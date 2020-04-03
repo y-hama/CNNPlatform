@@ -178,6 +178,14 @@ namespace Components
             return matrix;
         }
 
+        public void CopyTo(RNdMatrix dist)
+        {
+            if (IsSimilarity(this, dist))
+            {
+                Array.Copy(Data, 0, dist.Data, 0, Data.Length);
+            }
+        }
+
         //public override void Show(string name, int batchindex = 0)
         //{
         //    Cv2.ImShow(name, ArrayToMat(batchindex));

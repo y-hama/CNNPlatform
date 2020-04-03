@@ -69,9 +69,9 @@ namespace Components.Imaging
         {
             Mat frame = source.Clone();
 
-            double rho = 0.75;
-            Cv2.Laplacian(source, frame, source.Type());
-            Cv2.AddWeighted(source, rho, frame, (1 - rho), 1, frame);
+            //double rho = 0.75;
+            //Cv2.Laplacian(source, frame, source.Type());
+            //Cv2.AddWeighted(source, rho, frame, (1 - rho), 1, frame);
 
             return frame;
         }

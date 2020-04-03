@@ -12,11 +12,20 @@ namespace ProcessVisualizer
         /// アプリケーションのメイン エントリ ポイントです。
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+#if !DEBUG
+            if (args.Length == 0)
+            {
+                Components.Locker.Process.Start("ProcessVisualizer.exe", new bool[] { false, false, false, false, false, false, false, true }, "s");
+            }
+            else
+#endif
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new Form1());
+            }
         }
     }
 }

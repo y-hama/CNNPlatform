@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using CNNPlatform.Utility.Shared;
+
 namespace CNNPlatform.Model
 {
     class Creater
@@ -11,7 +13,7 @@ namespace CNNPlatform.Model
         private Creater() { }
         public static Creater Core { get; private set; } = new Creater();
 
-        public SharedObject Instance { get; set; } = null;
+        public ModelParameter Instance { get; set; } = null;
 
         public Model TestModel(int batchcount = 1)
         {

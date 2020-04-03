@@ -181,11 +181,16 @@ namespace Components.Locker
         {
             var channelProperties = new Dictionary<string, string>();
             channelProperties.Add("portName", channelname);
+            channelProperties.Add("name", channelname);
             // サーバーチャンネルの生成
             IpcChannel channel = new IpcChannel(channelProperties, null, new BinaryServerFormatterSinkProvider
             {
                 TypeFilterLevel = System.Runtime.Serialization.Formatters.TypeFilterLevel.Full,
             });
+
+            //// サーバーチャンネルの生成
+            //IpcServerChannel channel = new IpcServerChannel(channelname, channelname);
+
             // チャンネルを登録
             ChannelServices.RegisterChannel(channel, true);
 
@@ -193,18 +198,23 @@ namespace Components.Locker
             var key = (Exclusive)Activator.CreateInstance(objecttype);
             RemotingServices.Marshal(key, objectname, objecttype);
             key.DistributionThread();
+
+            Console.WriteLine(@"Server Open: ipc://" + channelname + @"/" + objectname);
+
             return key;
         }
 
         public static Exclusive CreateClient(string channelname, string objectname)
         {
             // クライアントチャンネルの生成
-            IpcClientChannel channel = new IpcClientChannel();
+            var channelProperties = new Dictionary<string, string>();
+            channelProperties.Add("portName", channelname);
+            IpcClientChannel channel = new IpcClientChannel(channelProperties, null);
             // チャンネルを登録
             ChannelServices.RegisterChannel(channel, true);
 
             // リモートオブジェクトを取得
-            var key = Activator.GetObject(typeof(Exclusive), "ipc://" + channelname + "/" + objectname) as Exclusive;
+            var key = (Exclusive)Activator.GetObject(typeof(Exclusive), @"ipc://" + channelname + @"/" + objectname);
             return key;
         }
     }

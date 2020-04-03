@@ -16,6 +16,7 @@ namespace CNNPlatform
         {
             if (args.Length == 0)
             {
+                TheradLearning.Core.Start();
             }
             else
             {
@@ -28,8 +29,26 @@ namespace CNNPlatform
                     }
                     else { throw new Exception(); }
                 }
+                else if (args.Length == 2)
+                {
+                    uint bcnt;
+                    string mode;
+                    mode = args[1];
+                    if (mode == "learning")
+                    {
+                        if (UInt32.TryParse(args[0], out bcnt))
+                        {
+                            LearningProcess.Core.BatchCount = bcnt > 0 ? (int)bcnt : 1;
+                        }
+                        else { throw new Exception(); }
+                        LearningProcess.Core.Start();
+                    }
+                    else if (mode == "inference")
+                    {
+                        InferenceProcess.Core.Start();
+                    }
+                }
             }
-            LearningProcess.Core.Start();
         }
     }
 }

@@ -22,7 +22,7 @@ namespace CNNPlatform
             public System.Threading.CountdownEvent Signal { get; set; } = new System.Threading.CountdownEvent(1);
 
             public double Error { get; set; }
-            public List<SharedObject.WeightData> Weignt { get; set; } = new List<SharedObject.WeightData>();
+            public List<Utility.Shared.ModelParameter.WeightData> Weignt { get; set; } = new List<Utility.Shared.ModelParameter.WeightData>();
         }
 
         private class ImageData
@@ -45,7 +45,7 @@ namespace CNNPlatform
             Initializer.Startup();
 
             Console.WriteLine(BatchCount);
-            var instance = (SharedObject)Components.Locker.ObjectLocker.CreateServer(SharedObject.ChannelName, SharedObject.ObjectName, typeof(SharedObject));
+            var instance = (Utility.Shared.ModelParameter)Components.Locker.ObjectLocker.CreateServer(Utility.Shared.ModelParameter.ChannelName, Utility.Shared.ModelParameter.ObjectName, typeof(Utility.Shared.ModelParameter));
             Model.Creater.Core.Instance = instance;
             var model = Model.Creater.Core.TestModel(BatchCount);
 
@@ -55,7 +55,7 @@ namespace CNNPlatform
             using (instance.Lock())
             {
                 instance.Initialized = true;
-                BufferingData.Instance.Weignt = new List<SharedObject.WeightData>(instance.Weignt);
+                BufferingData.Instance.Weignt = new List<Utility.Shared.ModelParameter.WeightData>(instance.Weignt);
             }
 
             #region OverwriteProcess
@@ -66,10 +66,10 @@ namespace CNNPlatform
                     BufferingData.Instance.Signal.Wait();
                     using (instance.Lock())
                     {
-                        Initializer.Terminate = instance.ExitApplication;
+                        //Initializer.Terminate = instance.ExitApplication;
                         instance.Generation = Initializer.Generatiion;
                         instance.Error = BufferingData.Instance.Error;
-                        instance.Weignt = new List<SharedObject.WeightData>(BufferingData.Instance.Weignt);
+                        instance.Weignt = new List<Utility.Shared.ModelParameter.WeightData>(BufferingData.Instance.Weignt);
                     }
                     BufferingData.Instance.Signal.Reset();
                 }
@@ -139,13 +139,12 @@ namespace CNNPlatform
                         error += Math.Abs(outputvariavble.Sigma.Data[i]);
                     }
                     error /= outputvariavble.Sigma.Length;
+                    Initializer.Generatiion++;
                     #endregion
 
                     Components.Imaging.View.Show(
                         new Components.RNdMatrix[] { inputvariavble.Input, teacher, (Components.RNdMatrix)outputvariavble.Sigma.Abs(), outputvariavble.Output },
                         "learning...");
-
-                    Initializer.Generatiion++;
 
                     #region Overwrite Signal
 #if true

@@ -10,20 +10,7 @@ namespace Components.Imaging
 {
     public class View
     {
-        public static void Show(RNdMatrix mat, string title = "window", int locx = -1, int locy = -1)
-        {
-            Mat[] frame;
-            Converter.RNdMatrixToMat(mat, out frame);
-
-            Cv2.ImShow(title, frame[0]);
-            if (locx >= 0 && locy >= 0)
-            {
-                Cv2.MoveWindow(title, locx, locy);
-            }
-            Cv2.WaitKey(1);
-        }
-
-        public static void Show(RNdMatrix[] mats, string title = "window", int locx = -1, int locy = -1)
+        private static Mat FrameConverter(RNdMatrix[] mats, int resultwidth = -1, int resultheight = -1)
         {
             int count = mats.Length;
             int tilec = (int)Math.Ceiling(Math.Sqrt(count));
@@ -48,12 +35,42 @@ namespace Components.Imaging
                 frame[new Rect(new Point(xi * width + offsetx, yi * height + offsety), new Size(mats[i].Width, mats[i].Height))] = tmpf;
             }
 
+            int w, h;
+            w = resultwidth > 0 ? resultwidth : width;
+            h = resultheight > 0 ? resultheight : height;
+            frame = frame.Resize(new Size(w, h));
+            return frame;
+        }
+
+        public static void Show(RNdMatrix mat, string title = "window", int locx = -1, int locy = -1)
+        {
+            Mat[] frame;
+            Converter.RNdMatrixToMat(mat, out frame);
+
+            Cv2.ImShow(title, frame[0]);
+            if (locx >= 0 && locy >= 0)
+            {
+                Cv2.MoveWindow(title, locx, locy);
+            }
+            Cv2.WaitKey(1);
+        }
+
+        public static void Show(RNdMatrix[] mats, string title = "window", int locx = -1, int locy = -1)
+        {
+            var frame = FrameConverter(mats);
             Cv2.ImShow(title, frame);
             if (locx >= 0 && locy >= 0)
             {
                 Cv2.MoveWindow(title, locx, locy);
             }
             Cv2.WaitKey(1);
+        }
+
+        public static RNdMatrix ConvertToShow(RNdMatrix[] mats, int width, int height)
+        {
+            RNdMatrix mat;
+            Imaging.Converter.MatToRNdMatrix(new Mat[] { FrameConverter(mats, width, height) }, out mat);
+            return mat;
         }
     }
 }

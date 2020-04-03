@@ -25,8 +25,8 @@ namespace CNNPlatform.Function.Variable
         {
             if (shared != null)
             {
-                var obj = shared as SharedObject;
-                var w = new CNNPlatform.SharedObject.WeightData(2);
+                var obj = shared as Utility.Shared.ModelParameter;
+                var w = new Utility.Shared.ModelParameter.WeightData(2);
                 w.Data[0] = new Components.RNdMatrix(InputChannels, OutputChannels, 1, 1);
                 w.Data[1] = new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1);
                 Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0.1 / (InputChannels * OutputChannels));
@@ -47,14 +47,16 @@ namespace CNNPlatform.Function.Variable
 
             OutWidth = (int)(OutScale * InWidth);
             OutHeight = (int)(OutScale * InHeight);
-            Output = new Components.RNdMatrix(BatchCount, OutputChannels, OutWidth, OutHeight);
 
+            Input = new Components.RNdMatrix(BatchCount, InputChannels, InWidth, InHeight);
+            Output = new Components.RNdMatrix(BatchCount, OutputChannels, OutWidth, OutHeight);
+            Sigma = new Components.RNdMatrix(BatchCount, OutputChannels, OutWidth, OutHeight);
             Propagator = new Components.RNdMatrix(BatchCount, InputChannels, InWidth, InHeight);
         }
 
         public override void UpdateParameter(object parameter)
         {
-            var weight = parameter as SharedObject.WeightData;
+            var weight = parameter as Utility.Shared.ModelParameter.WeightData;
 
             WeightBias.Data = weight.Data[0].Data.Clone() as Components.Real[];
             WeightKernel.Data = weight.Data[1].Data.Clone() as Components.Real[];
@@ -63,7 +65,7 @@ namespace CNNPlatform.Function.Variable
 
         public override void OverwriteParameter(ref object parameter)
         {
-            var weight = parameter as SharedObject.WeightData;
+            var weight = parameter as Utility.Shared.ModelParameter.WeightData;
 
             weight.Data[0].Data = WeightBias.Data.Clone() as Components.Real[];
             weight.Data[1].Data = WeightKernel.Data.Clone() as Components.Real[];
