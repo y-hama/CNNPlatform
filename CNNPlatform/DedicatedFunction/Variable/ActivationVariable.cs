@@ -10,6 +10,16 @@ namespace CNNPlatform.DedicatedFunction.Variable
     {
         public Utility.Types.Activator ActivationType { get; set; } = Utility.Types.Activator.ReLU;
 
+        public override string GetStatus
+        {
+            get
+            {
+                string ext = string.Empty;
+                ext += ActivationType.ToString() + ", ";
+                return ext;
+            }
+        }
+
         protected override void ConfirmField(object shared)
         {
             if (shared != null)

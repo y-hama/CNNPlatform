@@ -24,6 +24,18 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         public double Rho { get; set; } = 0.0001;
 
+        public override string GetStatus
+        {
+            get
+            {
+                string ext = string.Empty;
+                ext += KernelSize.ToString() + ", ";
+                ext += KernelExpand.ToString() + ", ";
+                ext += OptimizerType.ToString() + ", ";
+                return ext;
+            }
+        }
+
         protected override void ConfirmField(object shared)
         {
             if (shared != null)

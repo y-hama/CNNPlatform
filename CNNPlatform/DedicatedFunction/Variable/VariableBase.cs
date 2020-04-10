@@ -47,6 +47,8 @@ namespace CNNPlatform.DedicatedFunction.Variable
             return this;
         }
 
+        public abstract string GetStatus { get; }
+
         public abstract void UpdateParameter(object parameter);
         public abstract void OverwriteParameter(ref object parameter);
 

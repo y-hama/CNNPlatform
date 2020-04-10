@@ -13,6 +13,8 @@ namespace CNNPlatform.Layer
         public Components.GPGPU.Function.FunctionBase ForwardFunction { get; set; }
         public Components.GPGPU.Function.FunctionBase BackFunction { get; set; }
 
+        public string ParameterStatus { get { return Variable.GetStatus; } }
+
         public string Encode()
         {
             string res = "!!>\n";

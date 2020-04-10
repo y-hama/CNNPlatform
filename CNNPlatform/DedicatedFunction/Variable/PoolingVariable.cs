@@ -13,6 +13,17 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         public Components.RNdMatrix Map;
 
+        public override string GetStatus
+        {
+            get
+            {
+                string ext = string.Empty;
+                ext += CompressSize.ToString() + ", ";
+                ext += ExpandSize.ToString() + ", ";
+                return ext;
+            }
+        }
+
         protected override void ConfirmField(object shared)
         {
             if (shared != null)

@@ -54,8 +54,9 @@ namespace CNNPlatform.Model
             }
         }
 
-        public void AddLayer(Layer.LayerBase layer)
+        private void AddLayer(Layer.LayerBase layer)
         {
+            Console.WriteLine("Layer Add : " + layer.GetType().Name + " -> " + layer.ParameterStatus);
             Layer.Add(layer);
         }
 
@@ -76,7 +77,7 @@ namespace CNNPlatform.Model
             int inw, inh, inch;
             GetLayerInputInfomation(out inw, out inh, out inch);
 
-            Layer.Add(new Layer.Convolution()
+            AddLayer(new Layer.Convolution()
             {
                 Variable = new DedicatedFunction.Variable.ConvolutionVariable()
                 {
@@ -101,7 +102,7 @@ namespace CNNPlatform.Model
             int inw, inh, inch;
             GetLayerInputInfomation(out inw, out inh, out inch);
 
-            Layer.Add(new Layer.Pooling()
+            AddLayer(new Layer.Pooling()
             {
                 Variable = new DedicatedFunction.Variable.PoolingVariable()
                 {
@@ -121,7 +122,7 @@ namespace CNNPlatform.Model
             int inw, inh, inch;
             GetLayerInputInfomation(out inw, out inh, out inch);
 
-            Layer.Add(new Layer.Activation()
+            AddLayer(new Layer.Activation()
             {
                 Variable = new DedicatedFunction.Variable.ActivationVariable()
                 {
