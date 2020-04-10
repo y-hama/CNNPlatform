@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Components.GPGPU;
 
-namespace CNNPlatform.Function.Process
+namespace CNNPlatform.DedicatedFunction.Process
 {
     class ConvolutionForward : Components.GPGPU.Function.FunctionBase
     {
@@ -48,7 +48,7 @@ namespace CNNPlatform.Function.Process
 
         protected override void ConvertVariable(ComputeVariable _variable)
         {
-            var variable = _variable as Variable.ConvolutionValiable;
+            var variable = _variable as Variable.ConvolutionVariable;
 
             BatchCount = variable.BatchCount;
 
@@ -105,12 +105,11 @@ namespace CNNPlatform.Function.Process
                                 {
                                     int itx = i0 * InArea + ich * InSize + iy * InWidth + ix;
                                     int ktx = ich * (OutputChannels * KernelLength) + i1 * KernelLength + k;
-                                    int btx = ich * OutputChannels + i1;
-                                    output += Input[itx] * WeightKernel[ktx] + WeightBias[btx];
+                                    output += Input[itx] * WeightKernel[ktx];
                                 }
                             }
                         }
-                        Output[otx] = output;
+                        Output[otx] = output + WeightBias[i1];
                     });
                 });
             });

@@ -10,11 +10,7 @@ namespace Components.GPGPU.Function
         #region Iteration
         public void Parallel(int start, int end, Action<int> func)
         {
-#if PARALLEL
-            System.Threading.Tasks.Parallel.For(start, end, func);
-#else
-            for (int i = start; i < end; i++) { func(i); }
-#endif
+            GPGPU.Parallel.For(start, end, func);
         }
         #endregion
 
@@ -29,11 +25,17 @@ namespace Components.GPGPU.Function
             return (float)Math.Exp(x);
         }
 
+        protected float log(float x)
+        {
+            return (float)Math.Log(x);
+        }
+
         protected float abs(float x)
         {
             return Math.Abs(x);
         }
 
+        #region 
         protected float sin(float x)
         {
             return (float)Math.Sin(x);
@@ -48,6 +50,41 @@ namespace Components.GPGPU.Function
         {
             return (float)Math.Tan(x);
         }
+        #endregion
+
+        #region
+        protected float asin(float x)
+        {
+            return (float)Math.Asin(x);
+        }
+
+        protected float acos(float x)
+        {
+            return (float)Math.Acos(x);
+        }
+
+        protected float atan(float x)
+        {
+            return (float)Math.Atan(x);
+        }
+        #endregion
+
+        #region
+        protected float sinh(float x)
+        {
+            return (float)Math.Sinh(x);
+        }
+
+        protected float cosh(float x)
+        {
+            return (float)Math.Cosh(x);
+        }
+
+        protected float tanh(float x)
+        {
+            return (float)Math.Tanh(x);
+        }
+        #endregion
 
         protected float sign(float x)
         {

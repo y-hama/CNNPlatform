@@ -21,61 +21,59 @@ namespace ProcessVisualizer
         {
             InitializeComponent();
 
-            //Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false }, "1 inference");
+            Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false }, "1 inference");
             //Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { false, false, false, false, false, true, true, false }, "8 learning");
 
-            Components.Locker.Process.Start("CNNPlatform.exe", new bool[] { true, true, true, true, false, false, false, false });
+            //Instance = Components.Locker.ObjectLocker.CreateClient(ProcessParameter.ChannelName, ProcessParameter.ObjectName) as ProcessParameter;
+            //bool check = false;
+            //while (!check)
+            //{
+            //    System.Threading.Thread.Sleep(1000);
+            //    try
+            //    {
+            //        using (Instance.Lock(Components.Locker.Priority.Critical))
+            //        {
+            //            check = true;
+            //        }
+            //    }
+            //    catch (Exception)
+            //    { /* 繋がるまでリトライを繰り返す */ }
+            //}
 
-            Instance = Components.Locker.ObjectLocker.CreateClient(ProcessParameter.ChannelName, ProcessParameter.ObjectName) as ProcessParameter;
-            bool check = false;
-            while (!check)
-            {
-                System.Threading.Thread.Sleep(1000);
-                try
-                {
-                    using (Instance.Lock(Components.Locker.Priority.Critical))
-                    {
-                        check = true;
-                    }
-                }
-                catch (Exception)
-                { /* 繋がるまでリトライを繰り返す */ }
-            }
+            //timer1.Start();
 
-            timer1.Start();
-
-            new Task(() =>
-            {
-                Components.RNdMatrix result = null;
-                while (true)
-                {
-                    bool getlock = false;
-                    try
-                    {
-                        using (var key = Instance.LockThrow())
-                        {
-                            if (key != null)
-                            {
-                                getlock = true;
-                                if (Instance.Result != null)
-                                {
-                                    if (result == null) { result = new Components.RNdMatrix(Instance.Result.Shape); }
-                                    Instance.Result.CopyTo(result);
-                                }
-                                Generagion = Instance.Generagion;
-                            }
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        continue;
-                    }
-                    if (getlock && result != null)
-                    {
-                        Components.Imaging.View.Show(result, "result");
-                    }
-                }
-            }).Start();
+            //new Task(() =>
+            //{
+            //    Components.RNdMatrix result = null;
+            //    while (true)
+            //    {
+            //        bool getlock = false;
+            //        try
+            //        {
+            //            using (var key = Instance.LockThrow())
+            //            {
+            //                if (key != null)
+            //                {
+            //                    getlock = true;
+            //                    if (Instance.Result != null)
+            //                    {
+            //                        if (result == null) { result = new Components.RNdMatrix(Instance.Result.Shape); }
+            //                        result = Instance.Result;
+            //                    }
+            //                    Generagion = Instance.Generagion;
+            //                }
+            //            }
+            //        }
+            //        catch (Exception)
+            //        {
+            //            continue;
+            //        }
+            //        if (getlock && result != null)
+            //        {
+            //            Components.Imaging.View.Show(result, "result");
+            //        }
+            //    }
+            //}).Start();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -84,10 +82,10 @@ namespace ProcessVisualizer
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            using (Instance.Lock(Components.Locker.Priority.Critical))
-            {
-                Instance.ExitApplication = true;
-            }
+            //using (Instance.Lock(Components.Locker.Priority.Critical))
+            //{
+            //    Instance.ExitApplication = true;
+            //}
         }
 
         int gen = 0;

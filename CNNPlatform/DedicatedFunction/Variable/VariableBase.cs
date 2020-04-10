@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CNNPlatform.Function.Variable
+namespace CNNPlatform.DedicatedFunction.Variable
 {
     abstract class VariableBase : Components.GPGPU.ComputeVariable
     {
@@ -15,7 +15,6 @@ namespace CNNPlatform.Function.Variable
 
         public int InputChannels { get; set; }
 
-        public double OutScale { get; set; } = 1;
         public int OutWidth { get; protected set; } = 0;
         public int OutHeight { get; protected set; } = 0;
         public int OutputChannels { get; set; }
@@ -35,14 +34,23 @@ namespace CNNPlatform.Function.Variable
         public Components.RNdMatrix Sigma;
         public Components.RNdMatrix Propagator;
 
+        public Components.Real[] Error { get; private set; } = new Components.Real[8];
+
         protected abstract void ConfirmField(object shared);
         public VariableBase Confirm(object shared)
         {
             ConfirmField(shared);
+            Input = new Components.RNdMatrix(BatchCount, InputChannels, InWidth, InHeight);
+            Output = new Components.RNdMatrix(BatchCount, OutputChannels, OutWidth, OutHeight);
+            Sigma = new Components.RNdMatrix(BatchCount, OutputChannels, OutWidth, OutHeight);
+            Propagator = new Components.RNdMatrix(BatchCount, InputChannels, InWidth, InHeight);
             return this;
         }
 
         public abstract void UpdateParameter(object parameter);
         public abstract void OverwriteParameter(ref object parameter);
+
+        public abstract string EncodeParameter();
+        public abstract string EncodeOption();
     }
 }

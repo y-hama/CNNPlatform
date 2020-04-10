@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Components.GPGPU;
 
-namespace CNNPlatform.Function.Process
+namespace CNNPlatform.DedicatedFunction.Process
 {
     class ConvolutionBack : Components.GPGPU.Function.ParameterizedFunctionBase
     {
@@ -14,8 +14,6 @@ namespace CNNPlatform.Function.Process
             AddSource(new Process.GpgpuSource.gp_convback_bias());
             AddSource(new Process.GpgpuSource.gp_convback_kernel());
             AddSource(new Process.GpgpuSource.gp_convback_prop());
-            BiasOptimizer = new Optimizer.Adam();
-            KernelOptimizer = new Optimizer.Adam();
         }
 
         Optimizer.OptimizerBase BiasOptimizer { get; set; }
@@ -46,6 +44,7 @@ namespace CNNPlatform.Function.Process
         private int KernelLength;
         private int KernelExpand;
 
+        public Utility.Types.Optimizer OptimizerType { get; set; } = Utility.Types.Optimizer.Adam;
         private double rho;
 
         private Components.Real[] Input;
@@ -58,12 +57,20 @@ namespace CNNPlatform.Function.Process
         private Components.Real[] dKernel;
         private Components.Real[] dBias;
 
+        private Components.Real[] Error;
+
         private Components.Real[] Difference;
         #endregion
 
+        protected override void CreateOption()
+        {
+            BiasOptimizer = Optimizer.OptimizerBase.CreateInstance(OptimizerType);
+            KernelOptimizer = Optimizer.OptimizerBase.CreateInstance(OptimizerType);
+        }
+
         protected override void ConvertVariable(ComputeVariable _variable)
         {
-            var variable = _variable as Variable.ConvolutionValiable;
+            var variable = _variable as Variable.ConvolutionVariable;
 
             BatchCount = variable.BatchCount;
 
@@ -89,6 +96,7 @@ namespace CNNPlatform.Function.Process
             KernelLength = variable.KernelLength;
             KernelExpand = variable.KernelExpand;
 
+            OptimizerType = variable.OptimizerType;
             rho = variable.Rho;
 
             Input = variable.Input.Data;
@@ -98,27 +106,26 @@ namespace CNNPlatform.Function.Process
             WeightKernel = variable.WeightKernel.Data;
             WeightBias = variable.WeightBias.Data;
 
+            Error = variable.Error;
             Difference = variable.WeightDifference;
         }
 
         protected override void CpuFunction()
         {
             dBias = (Components.Real[])WeightBias.Clone();
-            Parallel(0, InputChannels, i0 =>
+            Parallel(0, OutputChannels, i0 =>
             {
-                Parallel(0, OutputChannels, i1 =>
+                int bidx = i0;
+                dBias[bidx] = 0;
+                for (int b = 0; b < BatchCount; b++)
                 {
-                    int bidx = i0 * OutputChannels + i1;
-                    dBias[bidx] = 0;
-                    for (int b = 0; b < BatchCount; b++)
+                    for (int i = 0; i < OutSize; i++)
                     {
-                        for (int i = 0; i < OutSize; i++)
-                        {
-                            int oidx = b * OutArea + i1 * OutSize + i;
-                            dBias[bidx] += Sigma[oidx];
-                        }
+                        int oidx = b * OutArea + i0 * OutSize + i;
+                        dBias[bidx] += Sigma[oidx];
                     }
-                });
+                }
+                //dBias[bidx] /= BatchCount;
             });
 
             dKernel = (Components.Real[])WeightKernel.Clone();
@@ -150,6 +157,7 @@ namespace CNNPlatform.Function.Process
                                 }
                             }
                         }
+                        //dKernel[kidx] /= BatchCount;
                     });
                 });
             });
@@ -215,7 +223,7 @@ namespace CNNPlatform.Function.Process
                 SetParameter(KernelLength, ValueMode.INT);
                 SetParameter(KernelExpand, ValueMode.INT);
 
-                Execute(InputChannels, OutputChannels);
+                Execute(OutputChannels);
                 ReadBuffer(_dbias, ref dBias);
             }
 
@@ -292,8 +300,11 @@ namespace CNNPlatform.Function.Process
 
         public override void Update()
         {
-            Difference[0] = BiasOptimizer.Update(ref WeightBias, dBias, (OutScale == 0 ? 1 : 1.0 / OutScale) * (rho / (BatchCount)));
-            Difference[1] = KernelOptimizer.Update(ref WeightKernel, dKernel, (OutScale == 0 ? 1 : 1.0 / OutScale) * (rho / (BatchCount * KernelLength)));
+            CalcurationError(ref Error, Sigma);
+
+            double ep = (OutScale == 0 ? 1 : 1.0 / OutScale) * ((double)KernelLength / (InputChannels * OutputChannels));
+            Difference[0] = BiasOptimizer.Update(ref WeightBias, dBias, ep * rho);
+            Difference[1] = KernelOptimizer.Update(ref WeightKernel, dKernel, ep * rho);
         }
     }
 }

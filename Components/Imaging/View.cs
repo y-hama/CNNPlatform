@@ -66,7 +66,13 @@ namespace Components.Imaging
             Cv2.WaitKey(1);
         }
 
-        public static RNdMatrix ConvertToShow(RNdMatrix[] mats, int width, int height)
+        public static void Show(Real[] data, int[] shape, string title = "window", int locx = -1, int locy = -1)
+        {
+            var mat = new Components.RNdMatrix(shape) { Data = data };
+            Show(mat, title, locx, locy);
+        }
+
+        public static RNdMatrix ConvertToShow(RNdMatrix[] mats, int width = 0, int height = 0)
         {
             RNdMatrix mat;
             Imaging.Converter.MatToRNdMatrix(new Mat[] { FrameConverter(mats, width, height) }, out mat);

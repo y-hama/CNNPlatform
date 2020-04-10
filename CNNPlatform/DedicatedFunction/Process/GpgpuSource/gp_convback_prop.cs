@@ -4,14 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CNNPlatform.Function.Process.GpgpuSource
+namespace CNNPlatform.DedicatedFunction.Process.GpgpuSource
 {
-    class gp_convback_bias : Components.GPGPU.Function.SourceCode
+    class gp_convback_prop : Components.GPGPU.Function.SourceCode
     {
         protected override void ParameterConfigration()
         {
             AddParameter("Sigma", ObjectType.Array, ElementType.FLOAT);
-            AddParameter("dBias", ObjectType.Array, ElementType.FLOAT);
+            AddParameter("WeightKernel", ObjectType.Array, ElementType.FLOAT);
+            AddParameter("Propagator", ObjectType.Array, ElementType.FLOAT);
 
             AddParameter("BatchCount", ObjectType.Value, ElementType.INT);
             AddParameter("InWidth", ObjectType.Value, ElementType.INT);
@@ -35,20 +36,29 @@ namespace CNNPlatform.Function.Process.GpgpuSource
 
         protected override void CreateSource()
         {
-            GlobalID(2);
+            GlobalID(3);
             AddMethodBody(@"
-                    int bidx = i0 * OutputChannels + i1;
-                    dBias[bidx] = 0;
-                    for (int b = 0; b < BatchCount; b++)
-                    {
-                        for (int i = 0; i < OutSize; i++)
+                        int y = (int)(i2 / InWidth);
+                        int x = i2 - y * InWidth;
+                        int pidx = i0 * InArea + i1 * InSize + i2;
+                        Propagator[pidx] = 0;
+                        for (int k = 0; k < KernelLength; k++)
                         {
-                            int oidx = b * OutArea + i1 * OutSize + i;
-                            dBias[bidx] += Sigma[oidx];
+                            int t = k / KernelArea;
+                            int s = k - t * KernelArea;
+                            int ox = (int)(((float)x / OutScale) - KernelExpand * (s - KernelSize));
+                            int oy = (int)(((float)y / OutScale) - KernelExpand * (t - KernelSize));
+                            if (ox >= 0 && oy >= 0 && ox < OutWidth && oy < OutHeight)
+                            {
+                                for (int och = 0; och < OutputChannels; och++)
+                                {
+                                    int oidx = i0 * OutArea + och * OutSize + oy * OutWidth + ox;
+                                    int kidx = i1 * (OutputChannels * KernelLength) + och * KernelLength + k;
+                                    Propagator[pidx] += Sigma[oidx] * WeightKernel[kidx];
+                                }
+                            }
                         }
-                    }
 ");
         }
-
     }
 }

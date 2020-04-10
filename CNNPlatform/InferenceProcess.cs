@@ -72,8 +72,8 @@ namespace CNNPlatform
                     Difference.Add(weight[i].Difference);
                 }
 
-                var inputvariavble = model[0].Variable as Function.Variable.ConvolutionValiable;
-                var outputvariavble = model[model.LayerCount - 1].Variable as Function.Variable.ConvolutionValiable;
+                var inputvariavble = model[0].Variable as DedicatedFunction.Variable.ConvolutionVariable;
+                var outputvariavble = model[model.LayerCount - 1].Variable as DedicatedFunction.Variable.ConvolutionVariable;
                 while (!Terminate)
                 {
                     #region ReadWeight 
@@ -102,7 +102,7 @@ namespace CNNPlatform
                         model[i].ForwardFunction.Do(model[i].Variable);
                         if (i < model.LayerCount - 1)
                         {
-                            (model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
+                            (model[i + 1].Variable as DedicatedFunction.Variable.VariableBase).Input = (model[i].Variable as DedicatedFunction.Variable.VariableBase).Output;
                         }
                     }
 

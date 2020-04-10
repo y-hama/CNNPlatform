@@ -12,7 +12,7 @@ namespace CNNPlatform
         private LearningProcess() { }
         public static LearningProcess Core { get; private set; } = new LearningProcess();
 
-        public int BatchCount { get; set; } = 1;
+        public int BatchCount { get; set; } = 8;
 
         private class BufferingData
         {
@@ -49,8 +49,8 @@ namespace CNNPlatform
             Model.Creater.Core.Instance = instance;
             var model = Model.Creater.Core.TestModel(BatchCount);
 
-            var inputvariavble = model[0].Variable as Function.Variable.VariableBase;
-            var outputvariavble = model[model.LayerCount - 1].Variable as Function.Variable.VariableBase;
+            var inputvariavble = model[0].Variable as DedicatedFunction.Variable.VariableBase;
+            var outputvariavble = model[model.LayerCount - 1].Variable as DedicatedFunction.Variable.VariableBase;
 
             using (instance.Lock())
             {
@@ -121,7 +121,7 @@ namespace CNNPlatform
                         model[i].ForwardFunction.Do(model[i].Variable);
                         if (i < model.LayerCount - 1)
                         {
-                            (model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
+                            (model[i + 1].Variable as DedicatedFunction.Variable.VariableBase).Input = (model[i].Variable as DedicatedFunction.Variable.VariableBase).Output;
                         }
                     }
                     outputvariavble.Sigma = outputvariavble.Output - teacher;
@@ -130,7 +130,7 @@ namespace CNNPlatform
                         model[i].BackFunction.Do(model[i].Variable);
                         if (i > 0)
                         {
-                            (model[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model[i].Variable as Function.Variable.VariableBase).Propagator;
+                            (model[i - 1].Variable as DedicatedFunction.Variable.VariableBase).Sigma = (model[i].Variable as DedicatedFunction.Variable.VariableBase).Propagator;
                         }
                     }
                     var error = 0.0;

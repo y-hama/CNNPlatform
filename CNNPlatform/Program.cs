@@ -41,7 +41,7 @@ namespace CNNPlatform
                             LearningProcess.Core.BatchCount = bcnt > 0 ? (int)bcnt : 1;
                         }
                         else { throw new Exception(); }
-                        LearningProcess.Core.Start();
+                        TheradLearning.Core.Start();
                     }
                     else if (mode == "inference")
                     {

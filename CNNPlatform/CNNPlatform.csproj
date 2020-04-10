@@ -46,21 +46,32 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Function\Process\ConvolutionBack.cs" />
-    <Compile Include="Function\Process\ConvolutionForward.cs" />
-    <Compile Include="Function\Process\GpgpuSource\gp_convback_bias.cs" />
-    <Compile Include="Function\Process\GpgpuSource\gp_convback_kernel.cs" />
-    <Compile Include="Function\Process\GpgpuSource\gp_convback_prop.cs" />
-    <Compile Include="Function\Process\GpgpuSource\gp_convfowd.cs" />
-    <Compile Include="Function\Process\Optimizer\AdaDelta.cs" />
-    <Compile Include="Function\Process\Optimizer\Adam.cs" />
-    <Compile Include="Function\Process\Optimizer\OptimizerBase.cs" />
-    <Compile Include="Function\Variable\ConvolutionValiable.cs" />
-    <Compile Include="Function\Variable\VariableBase.cs" />
+    <Compile Include="DedicatedFunction\Process\ActivationBack.cs" />
+    <Compile Include="DedicatedFunction\Process\ActivationForward.cs" />
+    <Compile Include="DedicatedFunction\Process\ConvolutionBack.cs" />
+    <Compile Include="DedicatedFunction\Process\ConvolutionForward.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_convback_bias.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_convback_kernel.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_convback_prop.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_convfowd.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_plback.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_plfowd.cs" />
+    <Compile Include="DedicatedFunction\Process\Optimizer\Adam.cs" />
+    <Compile Include="DedicatedFunction\Process\Optimizer\AdaSelf.cs" />
+    <Compile Include="DedicatedFunction\Process\Optimizer\AMSGrad.cs" />
+    <Compile Include="DedicatedFunction\Process\Optimizer\OptimizerBase.cs" />
+    <Compile Include="DedicatedFunction\Process\PoolingBack.cs" />
+    <Compile Include="DedicatedFunction\Process\PoolingForward.cs" />
+    <Compile Include="DedicatedFunction\Variable\ActivationVariable.cs" />
+    <Compile Include="DedicatedFunction\Variable\ConvolutionVariable.cs" />
+    <Compile Include="DedicatedFunction\Variable\PoolingVariable.cs" />
+    <Compile Include="DedicatedFunction\Variable\VariableBase.cs" />
     <Compile Include="InferenceProcess.cs" />
     <Compile Include="Initializer.cs" />
+    <Compile Include="Layer\Activation.cs" />
     <Compile Include="Layer\Convolution.cs" />
     <Compile Include="Layer\LayerBase.cs" />
+    <Compile Include="Layer\Pooling.cs" />
     <Compile Include="LearningProcess.cs" />
     <Compile Include="Model\Model.cs" />
     <Compile Include="Model\Creater.cs" />
@@ -70,6 +81,7 @@
     <Compile Include="TheradLearning.cs" />
     <Compile Include="Utility\Randomizer.cs" />
     <Compile Include="Utility\Shared\ProcessParameter.cs" />
+    <Compile Include="Utility\Types.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Components\Components.csproj">
@@ -78,7 +90,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Function\SharedMethod\" />
+    <Folder Include="DedicatedFunction\SharedMethod\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

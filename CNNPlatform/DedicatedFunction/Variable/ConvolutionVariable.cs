@@ -4,15 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CNNPlatform.Function.Variable
+namespace CNNPlatform.DedicatedFunction.Variable
 {
-    class ConvolutionValiable : VariableBase
+    class ConvolutionVariable : VariableBase
     {
+        public double OutScale { get; set; } = 1;
+
         public int KernelSize { get; set; }
         public int KernelArea { get { return 2 * KernelSize + 1; } }
         public int KernelLength { get { return KernelArea * KernelArea; } }
         public int KernelExpand { get; set; } = 1;
 
+        public Utility.Types.Optimizer OptimizerType { get; set; } = Utility.Types.Optimizer.Adam;
 
         public Components.RNdMatrix WeightBias;
         public Components.RNdMatrix WeightKernel;
@@ -27,10 +30,10 @@ namespace CNNPlatform.Function.Variable
             {
                 var obj = shared as Utility.Shared.ModelParameter;
                 var w = new Utility.Shared.ModelParameter.WeightData(2);
-                w.Data[0] = new Components.RNdMatrix(InputChannels, OutputChannels, 1, 1);
+                w.Data[0] = new Components.RNdMatrix(OutputChannels, 1, 1, 1);
                 w.Data[1] = new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1);
-                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0.1 / (InputChannels * OutputChannels));
-                Utility.Randomizer.Noize(ref w.Data[1].Data, Utility.Randomizer.Sign.Both, 0.1 / Math.Pow(2 * KernelSize + 1, 2));
+                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 1.0 / (InputChannels * KernelLength));
+                Utility.Randomizer.Noize(ref w.Data[1].Data, Utility.Randomizer.Sign.Both, 1.0 / (KernelLength));
                 obj.Weignt.Add(w);
 
                 WeightBias = new Components.RNdMatrix(w.Data[0].Shape);
@@ -41,17 +44,12 @@ namespace CNNPlatform.Function.Variable
             }
             else
             {
-                WeightBias = (new Components.RNdMatrix(InputChannels, OutputChannels, 1, 1)) as Components.RNdMatrix;
+                WeightBias = (new Components.RNdMatrix(OutputChannels, 1, 1, 1)) as Components.RNdMatrix;
                 WeightKernel = (new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1)) as Components.RNdMatrix;
             }
 
             OutWidth = (int)(OutScale * InWidth);
             OutHeight = (int)(OutScale * InHeight);
-
-            Input = new Components.RNdMatrix(BatchCount, InputChannels, InWidth, InHeight);
-            Output = new Components.RNdMatrix(BatchCount, OutputChannels, OutWidth, OutHeight);
-            Sigma = new Components.RNdMatrix(BatchCount, OutputChannels, OutWidth, OutHeight);
-            Propagator = new Components.RNdMatrix(BatchCount, InputChannels, InWidth, InHeight);
         }
 
         public override void UpdateParameter(object parameter)
@@ -72,5 +70,44 @@ namespace CNNPlatform.Function.Variable
             weight.Difference = WeightDifference.Clone() as Components.Real[];
         }
 
+        public override string EncodeParameter()
+        {
+            string res = string.Empty;
+            res += BatchCount.ToString() + " ";
+            res += InWidth.ToString() + " ";
+            res += InHeight.ToString() + " ";
+            res += InputChannels.ToString() + " ";
+            res += OutWidth.ToString() + " ";
+            res += OutHeight.ToString() + " ";
+            res += OutputChannels.ToString() + " ";
+
+            res += OutScale.ToString() + " ";
+            res += KernelSize.ToString() + " ";
+            res += KernelExpand.ToString() + " ";
+            res += OptimizerType.ToString() + " ";
+            res += Rho.ToString() + " ";
+
+            return res;
+        }
+
+        public override string EncodeOption()
+        {
+            var strw = "{" + WeightBias.BatchSize + "," + WeightBias.Channels + "," + WeightBias.Width + "," + WeightBias.Height + "}(";
+            for (int i = 0; i < WeightBias.Length; i++)
+            {
+                if (i != 0) { strw += ","; }
+                strw += WeightBias.Data[i].ToString();
+            }
+            strw += ")";
+
+            var strk = "{" + WeightKernel.BatchSize + "," + WeightKernel.Channels + "," + WeightKernel.Width + "," + WeightKernel.Height + "}(";
+            for (int i = 0; i < WeightKernel.Length; i++)
+            {
+                if (i != 0) { strk += ","; }
+                strk += WeightKernel.Data[i].ToString();
+            }
+            strk += ")";
+            return strw + "\n" + strk;
+        }
     }
 }

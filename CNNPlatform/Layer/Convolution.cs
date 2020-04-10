@@ -10,8 +10,8 @@ namespace CNNPlatform.Layer
     {
         public Convolution()
         {
-            ForwardFunction = new Function.Process.ConvolutionForward();
-            BackFunction = new Function.Process.ConvolutionBack();
+            ForwardFunction = new DedicatedFunction.Process.ConvolutionForward();
+            BackFunction = new DedicatedFunction.Process.ConvolutionBack();
         }
     }
 }

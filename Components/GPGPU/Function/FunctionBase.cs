@@ -94,6 +94,8 @@ namespace Components.GPGPU.Function
         private List<ComputeVariable.ParameterSet> _cParam { get; set; }
 
         private int BufferNNameIndex { get; set; } = 0;
+
+        protected bool OptionCreated { get; set; } = false;
         #endregion
 
         #region Abstruct/Vitrual
@@ -105,6 +107,7 @@ namespace Components.GPGPU.Function
         protected abstract void CpuFunction();
         protected abstract void GpuFunction();
 
+        protected virtual void CreateOption() { }
         protected virtual void UpdateWithCondition() { }
         #endregion
 
@@ -191,6 +194,15 @@ namespace Components.GPGPU.Function
             Queue[sellectionIndex].Execute(Kernel[sellectionIndex], null, globalworksize, null, null);
             Queue[sellectionIndex].Finish();
         }
+
+        protected void OptionCreater()
+        {
+            if (!OptionCreated)
+            {
+                CreateOption();
+                OptionCreated = true;
+            }
+        }
         #endregion
 
         #region PublicMethod
@@ -202,7 +214,7 @@ namespace Components.GPGPU.Function
                 Kernel = new List<ComputeKernel>();
                 Queue = new List<ComputeCommandQueue>();
                 GpuParameter = new List<List<GpuParamSet>>();
-                var option = GPGPU.Core.Instance.GetOption(GpuSource); 
+                var option = GPGPU.Core.Instance.GetOption(GpuSource);
                 foreach (var item in option)
                 {
                     Context.Add(item.Context);
@@ -241,6 +253,7 @@ namespace Components.GPGPU.Function
             {
                 _cParam = variable.Parameter;
                 ConvertVariable(variable);
+                OptionCreater();
                 ProcessFunction();
                 UpdateWithCondition();
 

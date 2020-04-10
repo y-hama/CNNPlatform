@@ -14,7 +14,7 @@ namespace CNNPlatform
         private TheradLearning() { }
         public static TheradLearning Core { get; private set; } = new TheradLearning();
 
-        public int BatchCount { get; set; } = 1;
+        public int BatchCount { get; set; } = 4;
 
         #region InnerClass       
         private class BufferingData
@@ -23,6 +23,7 @@ namespace CNNPlatform
             public static BufferingData Instance { get; } = new BufferingData();
 
             public System.Threading.CountdownEvent Signal { get; set; } = new System.Threading.CountdownEvent(1);
+            public System.Threading.CountdownEvent UpdateSignal { get; set; } = new System.Threading.CountdownEvent(1);
 
             public double Error { get; set; }
             public List<ModelParameter.WeightData> Weignt { get; set; } = new List<ModelParameter.WeightData>();
@@ -57,8 +58,8 @@ namespace CNNPlatform
             // Model生成
             Model.Creater.Core.Instance = instance;
             var model = Model.Creater.Core.TestModel(BatchCount);
-            var inputvariavble = model[0].Variable as Function.Variable.VariableBase;
-            var outputvariavble = model[model.LayerCount - 1].Variable as Function.Variable.VariableBase;
+            var inputvariavble = model[0].Variable as DedicatedFunction.Variable.VariableBase;
+            var outputvariavble = model[model.LayerCount - 1].Variable as DedicatedFunction.Variable.VariableBase;
             using (instance.Lock(Components.Locker.Priority.Critical))
             {
                 BufferingData.Instance.Weignt = new List<ModelParameter.WeightData>(instance.Weignt);
@@ -71,17 +72,19 @@ namespace CNNPlatform
             {
                 while (!Initializer.Terminate)
                 {
-                    using (processParameter.Lock())
+                    BufferingData.Instance.UpdateSignal.Reset();
+                    if (result != null)
                     {
-                        Initializer.Terminate = processParameter.ExitApplication;
-                        Console.WriteLine(Initializer.Terminate);
-                        if (result != null)
+                        using (processParameter.Lock())
                         {
-                            processParameter.Result = result.Clone() as Components.RNdMatrix;
-                            //Components.Imaging.View.Show(processParameter.Result, "sample");
+                            Initializer.Terminate = processParameter.ExitApplication;
+                            //Console.WriteLine(Initializer.Terminate);
+                            if (processParameter.Result == null) { processParameter.Result = new Components.RNdMatrix(result.Shape); }
+                            result.CopyTo(processParameter.Result);
                         }
+                        Components.Imaging.View.Show(result, "sample");
                     }
-                    System.Threading.Thread.Sleep(1000);
+                    BufferingData.Instance.UpdateSignal.Wait();
                 }
             }).Start();
             new Task(() =>
@@ -95,11 +98,14 @@ namespace CNNPlatform
                         instance.Error = BufferingData.Instance.Error;
                         instance.Weignt = new List<ModelParameter.WeightData>(BufferingData.Instance.Weignt);
                     }
+                    Console.WriteLine(DedicatedFunction.Process.Optimizer.OptimizerBase.Iteration + " / " + Initializer.Generatiion + " / " + BufferingData.Instance.Error);
                     BufferingData.Instance.Signal.Reset();
+                    BufferingData.Instance.UpdateSignal.Signal();
                 }
             }).Start();
             #endregion
 
+            bool iteration = false;
             #region SourceLoadProcess
             Components.Imaging.FileLoader.Instance.SetLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
             new Task(() =>
@@ -109,7 +115,7 @@ namespace CNNPlatform
                 {
                     ImageData.Instance.LoadSignal.Reset();
                     ImageData.Instance.ResetSignal.Reset();
-                    Components.Imaging.FileLoader.Instance.LoadImage(
+                    iteration = Components.Imaging.FileLoader.Instance.LoadImage(
                         inputvariavble.InWidth, inputvariavble.InHeight, outputvariavble.OutWidth, outputvariavble.OutHeight, inputvariavble.BatchCount,
                         inputvariavble.InputChannels, outputvariavble.OutputChannels, out i, out t);
                     ImageData.Instance.Input = i;
@@ -128,6 +134,12 @@ namespace CNNPlatform
                 inputvariavble.Input.Data = ImageData.Instance.Input.Data.Clone() as Components.Real[];
                 teacher.Data = ImageData.Instance.Teacher.Data.Clone() as Components.Real[];
                 ImageData.Instance.ResetSignal.Signal();
+                if (iteration)
+                {
+                    iteration = false;
+                    DedicatedFunction.Process.Optimizer.OptimizerBase.Iteration++;
+                    model.Epoch = (int)DedicatedFunction.Process.Optimizer.OptimizerBase.Iteration;
+                }
 
                 #region LearningProcess
                 for (int i = 0; i < model.LayerCount; i++)
@@ -135,7 +147,8 @@ namespace CNNPlatform
                     model[i].ForwardFunction.Do(model[i].Variable);
                     if (i < model.LayerCount - 1)
                     {
-                        (model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
+                        (model[i].Variable as DedicatedFunction.Variable.VariableBase).Output.CopyTo((model[i + 1].Variable as DedicatedFunction.Variable.VariableBase).Input);
+                        //(model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
                     }
                 }
                 outputvariavble.Sigma = outputvariavble.Output - teacher;
@@ -144,25 +157,22 @@ namespace CNNPlatform
                     model[i].BackFunction.Do(model[i].Variable);
                     if (i > 0)
                     {
-                        (model[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model[i].Variable as Function.Variable.VariableBase).Propagator;
+                        (model[i].Variable as DedicatedFunction.Variable.VariableBase).Propagator.CopyTo((model[i - 1].Variable as DedicatedFunction.Variable.VariableBase).Sigma);
+                        //(model[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model[i].Variable as Function.Variable.VariableBase).Propagator;
                     }
                 }
-                var error = 0.0;
-                for (int i = 0; i < outputvariavble.Sigma.Data.Length; i++)
-                {
-                    error += Math.Abs(outputvariavble.Sigma.Data[i]);
-                }
-                error /= outputvariavble.Sigma.Length;
                 Initializer.Generatiion++;
+                model.Generation = Initializer.Generatiion;
+                model.Error = outputvariavble.Error[0];
                 #endregion
 
                 var viweset = new Components.RNdMatrix[] { inputvariavble.Input, teacher, (Components.RNdMatrix)outputvariavble.Sigma.Abs(), outputvariavble.Output };
-                result = Components.Imaging.View.ConvertToShow(viweset, inputvariavble.InWidth, inputvariavble.InHeight);
+                result = Components.Imaging.View.ConvertToShow(viweset, 640, 480);//, inputvariavble.InWidth, inputvariavble.InHeight
 
                 #region Overwrite Signal
                 if (BufferingData.Instance.Signal.CurrentCount == BufferingData.Instance.Signal.InitialCount)
                 {
-                    BufferingData.Instance.Error = error;
+                    BufferingData.Instance.Error = outputvariavble.Error[1];
                     for (int i = 0; i < model.LayerCount; i++)
                     {
                         var _weight = (object)BufferingData.Instance.Weignt[i];
@@ -172,6 +182,7 @@ namespace CNNPlatform
                 }
                 #endregion
 
+                model.Save("test.mdl");
                 //Console.WriteLine(@"gen/" + Initializer.Generatiion + @" err/" + error);
                 GC.Collect();
             }
