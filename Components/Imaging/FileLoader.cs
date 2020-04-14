@@ -76,7 +76,7 @@ namespace Components.Imaging
             }
             idx1 = IndexA.Dequeue();
             idx2 = IndexB.Dequeue();
-            return new string[] { idx1, idx2 };
+            return new string[] { idx1, idx1 };
         }
 
         public bool LoadImage(int inw, int inh, int outw, int outh, int batchcount, int inchannels, int outchannels, out RNdMatrix smat, out RNdMatrix tmat)
