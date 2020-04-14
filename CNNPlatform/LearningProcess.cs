@@ -103,7 +103,7 @@ namespace CNNPlatform
             ;
             #endregion
 
-            Components.Imaging.FileLoader.Instance.SetLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
+            Components.Imaging.FileLoader.Instance.SetSourceLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
             inputvariavble.Input = new Components.RNdMatrix(inputvariavble.Propagator.Shape);
             Components.RNdMatrix teacher = new Components.RNdMatrix(outputvariavble.Output.Shape);
             //new Task(() =>

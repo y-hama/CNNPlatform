@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 using CNNPlatform.Utility.Shared;
 using CNNPlatform.DedicatedFunction.Process.Optimizer;
+using CNNPlatform.Layer;
+using CNNPlatform.DedicatedFunction.Variable;
 
 namespace CNNPlatform.Model
 {
@@ -56,8 +58,8 @@ namespace CNNPlatform.Model
 
         private void AddLayer(Layer.LayerBase layer)
         {
-            Console.WriteLine("Layer Add : " + layer.GetType().Name + " -> " + layer.ParameterStatus);
             Layer.Add(layer);
+            Console.WriteLine(string.Format("Layer({0,2}) : {1} -> {2}", LayerCount, layer.GetType().Name, layer.ParameterStatus));
         }
 
         private void GetLayerInputInfomation(out int inw, out int inh, out int inch)
@@ -68,6 +70,134 @@ namespace CNNPlatform.Model
                 inw = Layer[LayerCount - 1].Variable.OutWidth;
                 inh = Layer[LayerCount - 1].Variable.OutHeight;
                 inch = Layer[LayerCount - 1].Variable.OutputChannels;
+            }
+        }
+
+        #region CreateReverseLayer(private)
+        private Layer.LayerBase ReverseConvolution(VariableBase _variable)
+        {
+            var variable = _variable as ConvolutionVariable;
+
+            return new Layer.Convolution()
+            {
+                Variable = new DedicatedFunction.Variable.ConvolutionVariable()
+                {
+                    BatchCount = BatchCount,
+                    InputChannels = variable.OutputChannels,
+                    InWidth = variable.OutWidth,
+                    InHeight = variable.OutHeight,
+
+                    OutputChannels = variable.InputChannels,
+                    OutScale = 1.0 / variable.OutScale,
+
+                    KernelSize = variable.KernelSize,
+                    KernelExpand = variable.KernelExpand,
+                    OptimizerType = variable.OptimizerType,
+                    Rho = variable.Rho,
+                }.Confirm(Instance),
+            };
+        }
+
+        private Layer.LayerBase ReversePooling(VariableBase _variable)
+        {
+            var variable = _variable as PoolingVariable;
+
+            return new Layer.Pooling()
+            {
+                Variable = new DedicatedFunction.Variable.PoolingVariable()
+                {
+                    BatchCount = BatchCount,
+                    InputChannels = variable.OutputChannels,
+                    InWidth = variable.OutWidth,
+                    InHeight = variable.OutHeight,
+
+                    CompressSize = variable.ExpandSize,
+                    ExpandSize = variable.CompressSize,
+                }.Confirm(Instance),
+            };
+        }
+
+        private Layer.LayerBase ReverseActivation(VariableBase _variable)
+        {
+            var variable = _variable as ActivationVariable;
+
+            return new Layer.Activation()
+            {
+                Variable = new DedicatedFunction.Variable.ActivationVariable()
+                {
+                    BatchCount = BatchCount,
+                    InputChannels = variable.OutputChannels,
+                    InWidth = variable.OutWidth,
+                    InHeight = variable.OutHeight,
+
+                    ActivationType = variable.ActivationType,
+                }.Confirm(Instance),
+            };
+        }
+
+        private Layer.LayerBase ReverseAffine(VariableBase _variable)
+        {
+            var variable = _variable as AffineVariable;
+
+            return new Layer.Affine()
+            {
+                Variable = new DedicatedFunction.Variable.AffineVariable()
+                {
+                    BatchCount = BatchCount,
+                    InputChannels = variable.OutputChannels,
+                    InWidth = variable.OutWidth,
+                    InHeight = variable.OutHeight,
+
+                    OutputChannels = variable.InputChannels,
+                    OutWidth = variable.InWidth,
+                    OutHeight = variable.InHeight,
+
+                }.Confirm(Instance),
+            };
+        }
+        #endregion
+
+        #region AddLayer(Public)
+        public void AddReverse()
+        {
+            var list = new List<Layer.LayerBase>();
+            if (Layer[LayerCount - 1] is Layer.Convolution)
+            {
+                list.Add(ReverseConvolution(Layer[LayerCount - 1].Variable));
+            }
+            else if (Layer[LayerCount - 1] is Layer.Pooling)
+            {
+                list.Add(ReversePooling(Layer[LayerCount - 1].Variable));
+            }
+            else if (Layer[LayerCount - 1] is Layer.Affine)
+            {
+                list.Add(ReverseAffine(Layer[LayerCount - 1].Variable));
+            }
+
+            for (int i = LayerCount - 2; i >= 0; i--)
+            {
+                var type = Layer[i].GetType();
+                if (Layer[i] is Layer.Convolution)
+                {
+                    list.Add(ReverseConvolution(Layer[i].Variable));
+                }
+                else if (Layer[i] is Layer.Pooling)
+                {
+                    list.Add(ReversePooling(Layer[i].Variable));
+                }
+                else if (Layer[i] is Layer.Activation)
+                {
+                    list.Add(ReverseActivation(Layer[i].Variable));
+                }
+                else if (Layer[i] is Layer.Affine)
+                {
+                    list.Add(ReverseAffine(Layer[i].Variable));
+                }
+            }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                AddLayer(list[i]);
             }
         }
 
@@ -135,5 +265,30 @@ namespace CNNPlatform.Model
                 }.Confirm(Instance),
             });
         }
+
+        public void AddAffine(int outcount, Utility.Types.Optimizer type = Utility.Types.Optimizer.Adam, double rho = 0.0005)
+        {
+            int inw, inh, inch;
+            GetLayerInputInfomation(out inw, out inh, out inch);
+
+            AddLayer(new Layer.Affine()
+            {
+                Variable = new DedicatedFunction.Variable.AffineVariable()
+                {
+                    BatchCount = BatchCount,
+                    InputChannels = inch,
+                    InWidth = inw,
+                    InHeight = inh,
+
+                    OutputChannels = 1,
+                    OutWidth = 1,
+                    OutHeight = outcount,
+
+                    OptimizerType = type,
+                    Rho = rho,
+                }.Confirm(Instance),
+            });
+        }
+        #endregion
     }
 }

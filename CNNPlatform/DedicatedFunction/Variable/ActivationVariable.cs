@@ -10,6 +10,8 @@ namespace CNNPlatform.DedicatedFunction.Variable
     {
         public Utility.Types.Activator ActivationType { get; set; } = Utility.Types.Activator.ReLU;
 
+
+
         public override string GetStatus
         {
             get
@@ -22,15 +24,16 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         protected override void ConfirmField(object shared)
         {
+            OutputChannels = InputChannels;
+            OutWidth = InWidth;
+            OutHeight = InHeight;
+
             if (shared != null)
             {
                 var obj = shared as Utility.Shared.ModelParameter;
                 var w = new Utility.Shared.ModelParameter.WeightData(0);
                 obj.Weignt.Add(w);
             }
-            OutputChannels = InputChannels;
-            OutWidth = InWidth;
-            OutHeight = InHeight;
         }
 
         public override void UpdateParameter(object parameter)

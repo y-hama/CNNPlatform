@@ -18,14 +18,22 @@ namespace Components.Imaging
         {
             ".bmp",
             ".jpg",
+            ".png",
         };
 
-        private System.IO.DirectoryInfo Directory { get; set; }
+        private System.IO.DirectoryInfo SourceDirectory { get; set; }
+        private System.IO.DirectoryInfo ResultDirectory { get; set; }
 
-        public void SetLocation(System.IO.DirectoryInfo info)
+        public void SetSourceLocation(System.IO.DirectoryInfo info)
         {
             if (!info.Exists) { throw new Exception(); }
-            Directory = info;
+            SourceDirectory = info;
+        }
+
+        public void SetResultLocation(System.IO.DirectoryInfo info)
+        {
+            if (!info.Exists) { throw new Exception(); }
+            ResultDirectory = info;
         }
 
         private Queue<string> IndexA { get; set; } = new Queue<string>();
@@ -43,7 +51,8 @@ namespace Components.Imaging
             else
             {
                 int fcnt = 0;
-                var flist = new List<System.IO.FileInfo>(Directory.GetFiles()).FindAll(x => ImageExtensions.Contains(x.Extension.ToLower()));
+                var flist = new List<System.IO.FileInfo>(SourceDirectory.GetFiles()).FindAll(x => ImageExtensions.Contains(x.Extension.ToLower()));
+                var rlist = new List<System.IO.FileInfo>(ResultDirectory.GetFiles()).FindAll(x => ImageExtensions.Contains(x.Extension.ToLower()));
                 HeadImage = flist[0].FullName;
                 while (fcnt != flist.Count)
                 {
@@ -54,12 +63,12 @@ namespace Components.Imaging
                     }
                     IndexA.Enqueue(flist[idx].FullName);
 
-                    idx = State.RandomSource.Next(flist.Count);
-                    while (IndexB.Contains(flist[idx].FullName))
-                    {
-                        idx = State.RandomSource.Next(flist.Count);
-                    }
-                    IndexB.Enqueue(flist[idx].FullName);
+                    idx = State.RandomSource.Next(rlist.Count);
+                    //while (IndexB.Contains(flist[idx].FullName))
+                    //{
+                    //    idx = State.RandomSource.Next(flist.Count);
+                    //}
+                    IndexB.Enqueue(rlist[idx].FullName);
                     fcnt++;
                 }
                 check = true;
@@ -67,7 +76,7 @@ namespace Components.Imaging
             }
             idx1 = IndexA.Dequeue();
             idx2 = IndexB.Dequeue();
-            return new string[] { idx1, idx1 };
+            return new string[] { idx1, idx2 };
         }
 
         public bool LoadImage(int inw, int inh, int outw, int outh, int batchcount, int inchannels, int outchannels, out RNdMatrix smat, out RNdMatrix tmat)
@@ -92,7 +101,7 @@ namespace Components.Imaging
                     else if (inchannels == 3) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.GRAY2BGR); }
                     else { throw new Exception(); }
                 }
-                sframe = sframe.Resize(new Size(inw, inh));
+                sframe = sframe.Resize(new Size(inw, inh), 0, 0, InterpolationFlags.Area);
                 sframes.Add(sframe.Clone());
 
                 var tframe = mat2.Clone();
@@ -102,7 +111,7 @@ namespace Components.Imaging
                     else if (outchannels == 3) { Cv2.CvtColor(tframe, tframe, ColorConversionCodes.GRAY2BGR); }
                     else { throw new Exception(); }
                 }
-                tframe = Effect(tframe.Resize(new Size(outw, outh)));
+                tframe = Effect(tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area));
                 tframe = Effect(tframe);
                 tframes.Add(tframe.Clone());
             }

@@ -18,23 +18,21 @@ namespace CNNPlatform.Model
 
         public Model TestModel(int batchcount = 1)
         {
-            var model = new CNNPlatform.Model.Model(Instance, batchcount, 80, 60, 3);
-
-            //model.AddConvolution(6, 1, 1, Types.Optimizer.AdaSelf);
-            //model.AddPooling(4, 1);
-            //model.AddConvolution(12, 1, 1, Types.Optimizer.AdaSelf);
-            //model.AddPooling(2, 1);
-
-            //model.AddConvolution(12, 1, 1, Types.Optimizer.AdaSelf);
-
-            model.AddConvolution(3, 1, 2, Types.Optimizer.AdaSelf, 4);
+            var model = new CNNPlatform.Model.Model(Instance, batchcount, 80, 80, 3);
+            model.AddConvolution(3, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddPooling(2, 1);
+            model.AddConvolution(3, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddPooling(2, 1);
+            model.AddConvolution(6, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddPooling(2, 1);
+            model.AddConvolution(12, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddActivation(Types.Activator.Mish);
+            model.AddAffine(800, Types.Optimizer.AdaSelf);
+            model.AddActivation(Types.Activator.Mish);
+            model.AddAffine(300, Types.Optimizer.AdaSelf);
             model.AddActivation(Types.Activator.Mish);
 
-            model.AddConvolution(3, 1, 2, Types.Optimizer.AdaSelf);
-            model.AddPooling(1, 1);
-
-            model.AddConvolution(3, 1, 1, Types.Optimizer.AdaSelf, 0.25);
-            //model.AddActivation(Types.Activator.Mish);
+            model.AddReverse();
             return model;
         }
     }

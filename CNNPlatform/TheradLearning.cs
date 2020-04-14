@@ -14,7 +14,7 @@ namespace CNNPlatform
         private TheradLearning() { }
         public static TheradLearning Core { get; private set; } = new TheradLearning();
 
-        public int BatchCount { get; set; } = 4;
+        public int BatchCount { get; set; } = 1;
 
         #region InnerClass       
         private class BufferingData
@@ -107,7 +107,8 @@ namespace CNNPlatform
 
             bool iteration = false;
             #region SourceLoadProcess
-            Components.Imaging.FileLoader.Instance.SetLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
+            Components.Imaging.FileLoader.Instance.SetSourceLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
+            Components.Imaging.FileLoader.Instance.SetResultLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/result/"));
             new Task(() =>
             {
                 Components.RNdMatrix i, t;
@@ -182,7 +183,7 @@ namespace CNNPlatform
                 }
                 #endregion
 
-                model.Save("test.mdl");
+                //model.Save("test.mdl");
                 //Console.WriteLine(@"gen/" + Initializer.Generatiion + @" err/" + error);
                 GC.Collect();
             }

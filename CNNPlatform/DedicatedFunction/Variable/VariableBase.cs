@@ -8,6 +8,16 @@ namespace CNNPlatform.DedicatedFunction.Variable
 {
     abstract class VariableBase : Components.GPGPU.ComputeVariable
     {
+        public string GetSizeStatus
+        {
+            get
+            {
+                return string.Format("(c:{0}, w:{1}, h:{2}) -> (c:{3}, w:{4}, h:{5})",
+                    InputChannels, InWidth, InHeight, OutputChannels, OutWidth, OutHeight);
+            }
+        }
+
+
         public int BatchCount { get; set; }
 
         public int InWidth { get; set; }
@@ -15,8 +25,8 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         public int InputChannels { get; set; }
 
-        public int OutWidth { get; protected set; } = 0;
-        public int OutHeight { get; protected set; } = 0;
+        public int OutWidth { get; set; } = 0;
+        public int OutHeight { get; set; } = 0;
         public int OutputChannels { get; set; }
 
         public int InSize { get { return InWidth * InHeight; } }

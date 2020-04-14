@@ -11,9 +11,9 @@ namespace Components
         #region EventMessage
         public enum EventState
         {
-            State,
-            Log,
-            Option01,
+            State = 1,
+            Log = 10,
+            Option01 = 100,
         }
 
         public class DataEventArgs
@@ -123,7 +123,7 @@ namespace Components
         private static void GPGPU_Startup()
         {
             GPGPU.Core.Instance.UseGPU = true;
-            Terminal.WriteLine(0, GPGPU.Core.Instance.ProcesserStatus);
+            Terminal.WriteLine(EventState.State, GPGPU.Core.Instance.ProcesserStatus);
 
             GPGPU.Core.Instance.BuildAllMethod();
         }

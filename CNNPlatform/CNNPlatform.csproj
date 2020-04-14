@@ -48,8 +48,13 @@
   <ItemGroup>
     <Compile Include="DedicatedFunction\Process\ActivationBack.cs" />
     <Compile Include="DedicatedFunction\Process\ActivationForward.cs" />
+    <Compile Include="DedicatedFunction\Process\AffineBack.cs" />
+    <Compile Include="DedicatedFunction\Process\AffineForward.cs" />
     <Compile Include="DedicatedFunction\Process\ConvolutionBack.cs" />
     <Compile Include="DedicatedFunction\Process\ConvolutionForward.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_affineback_prop.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_affineback_weight.cs" />
+    <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_affinefowd.cs" />
     <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_convback_bias.cs" />
     <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_convback_kernel.cs" />
     <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_convback_prop.cs" />
@@ -63,12 +68,14 @@
     <Compile Include="DedicatedFunction\Process\PoolingBack.cs" />
     <Compile Include="DedicatedFunction\Process\PoolingForward.cs" />
     <Compile Include="DedicatedFunction\Variable\ActivationVariable.cs" />
+    <Compile Include="DedicatedFunction\Variable\AffineVariable.cs" />
     <Compile Include="DedicatedFunction\Variable\ConvolutionVariable.cs" />
     <Compile Include="DedicatedFunction\Variable\PoolingVariable.cs" />
     <Compile Include="DedicatedFunction\Variable\VariableBase.cs" />
     <Compile Include="InferenceProcess.cs" />
     <Compile Include="Initializer.cs" />
     <Compile Include="Layer\Activation.cs" />
+    <Compile Include="Layer\Affine.cs" />
     <Compile Include="Layer\Convolution.cs" />
     <Compile Include="Layer\LayerBase.cs" />
     <Compile Include="Layer\Pooling.cs" />

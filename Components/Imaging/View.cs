@@ -15,7 +15,7 @@ namespace Components.Imaging
             int count = mats.Length;
             int tilec = (int)Math.Ceiling(Math.Sqrt(count));
             int width = mats.Select(x => x.Width).Max();
-            int height = mats.Select(x => x.Height).Max();
+            int height = mats.Select(x => x.Width > 1 ? x.Height : 0).Max();
 
             Mat frame = new Mat(new Size(width * tilec, height * tilec), MatType.CV_8UC3, new Scalar(0));
 
@@ -30,15 +30,19 @@ namespace Components.Imaging
                 {
                     Cv2.CvtColor(tmpf, tmpf, ColorConversionCodes.GRAY2BGR);
                 }
-                int offsetx = (width - mats[i].Width) / 2;
-                int offsety = (height - mats[i].Height) / 2;
-                frame[new Rect(new Point(xi * width + offsetx, yi * height + offsety), new Size(mats[i].Width, mats[i].Height))] = tmpf;
+                if (tmpf.Height > height)
+                {
+                    Cv2.Resize(tmpf, tmpf, new Size(tmpf.Width, height), 0, 0, InterpolationFlags.Area);
+                }
+                int offsetx = (width - tmpf.Width) / 2;
+                int offsety = (height - tmpf.Height) / 2;
+                frame[new Rect(new Point(xi * width + offsetx, yi * height + offsety), new Size(tmpf.Width, tmpf.Height))] = tmpf;
             }
 
             int w, h;
             w = resultwidth > 0 ? resultwidth : width;
             h = resultheight > 0 ? resultheight : height;
-            frame = frame.Resize(new Size(w, h));
+            frame = frame.Resize(new Size(w, h), 0, 0, InterpolationFlags.Area);
             return frame;
         }
 

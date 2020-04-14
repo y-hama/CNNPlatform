@@ -26,13 +26,6 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         protected override void ConfirmField(object shared)
         {
-            if (shared != null)
-            {
-                var obj = shared as Utility.Shared.ModelParameter;
-                var w = new Utility.Shared.ModelParameter.WeightData(0);
-                obj.Weignt.Add(w);
-            }
-
             CompressSize = CompressSize <= 0 ? 1 : CompressSize;
             ExpandSize = ExpandSize <= 0 ? 1 : ExpandSize;
 
@@ -41,6 +34,13 @@ namespace CNNPlatform.DedicatedFunction.Variable
             OutHeight = (int)(((double)ExpandSize / (double)CompressSize) * InHeight);
 
             Map = new Components.RNdMatrix(BatchCount, OutputChannels, InWidth, InHeight);
+
+            if (shared != null)
+            {
+                var obj = shared as Utility.Shared.ModelParameter;
+                var w = new Utility.Shared.ModelParameter.WeightData(0);
+                obj.Weignt.Add(w);
+            }
         }
 
         public override void UpdateParameter(object parameter)

@@ -38,6 +38,9 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         protected override void ConfirmField(object shared)
         {
+            OutWidth = (int)(OutScale * InWidth);
+            OutHeight = (int)(OutScale * InHeight);
+
             if (shared != null)
             {
                 var obj = shared as Utility.Shared.ModelParameter;
@@ -59,9 +62,6 @@ namespace CNNPlatform.DedicatedFunction.Variable
                 WeightBias = (new Components.RNdMatrix(OutputChannels, 1, 1, 1)) as Components.RNdMatrix;
                 WeightKernel = (new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1)) as Components.RNdMatrix;
             }
-
-            OutWidth = (int)(OutScale * InWidth);
-            OutHeight = (int)(OutScale * InHeight);
         }
 
         public override void UpdateParameter(object parameter)

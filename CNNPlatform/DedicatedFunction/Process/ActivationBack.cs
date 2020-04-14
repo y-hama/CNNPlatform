@@ -99,13 +99,20 @@ namespace CNNPlatform.DedicatedFunction.Process
                     {
                         float x = Output[i0];
                         float a = 0;
-                        if (x < Math.E)
+                        if (x > 2 * Math.PI)
+                        {
+                            a = 1;
+                        }
+                        else if (x < -2 * Math.PI)
+                        {
+                            a = 0;
+                        }
+                        else
                         {
                             float w = 4 * (x + 1) + 4 * exp(2 * x) + exp(3 * x) + (4 * x + 6) * exp(x);
                             float s = 2 * exp(x) + exp(2 * x) + 2;
                             a = (exp(x) * w / (s * s));
                         }
-                        else { float s = 1.0f / (1 + exp(-1)); a = 2 - s; }
                         Propagator[i0] = a * Sigma[i0];
                     });
                     break;
