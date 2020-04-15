@@ -76,10 +76,96 @@ namespace Components.Imaging
             Show(mat, title, locx, locy);
         }
 
-        public static RNdMatrix ConvertToShow(RNdMatrix[] mats, int width = 0, int height = 0)
+        public static RNdMatrix ConvertToResultImage(RNdMatrix[] mats, int width = 0, int height = 0)
         {
             RNdMatrix mat;
             Imaging.Converter.MatToRNdMatrix(new Mat[] { FrameConverter(mats, width, height) }, out mat);
+            return mat;
+        }
+
+        public static RNdMatrix ConvertToProcessImage(List<Components.RNdMatrix> source, double scale = 1)
+        {
+            int arraywidth = 10;
+            int w = 0, h = 0;
+            foreach (var item in source)
+            {
+                w += item.Width == 1 ? arraywidth : (int)(scale * item.Width);
+                if (item.Width > 1 && item.Height * item.Channels > h)
+                { h = (int)(scale * item.Height * item.Channels); }
+            }
+            Mat frame = new Mat(new Size(w, h), MatType.CV_8UC3, new Scalar(0));
+
+            int arrayheight = 0;
+            foreach (var item in source)
+            {
+                if (item.Width == 1)
+                {
+                    if (arrayheight < item.Height * scale)
+                    {
+                        arrayheight = (int)(item.Height * scale);
+                    }
+                }
+            }
+            double arrayscale = (double)h / arrayheight;
+
+            int startw = 0, wt = 0;
+            #region Input
+            wt = (source[0].Width == 1 ? arraywidth : (int)(scale * source[0].Width));
+            Mat[] tmps;
+            Converter.RNdMatrixToMat(source[0], out tmps);
+            if (scale != 1)
+            {
+                Cv2.Resize(tmps[0], tmps[0], new Size(), scale, scale, InterpolationFlags.Area);
+            }
+            if (frame.Height < tmps[0].Height)
+            {
+                Cv2.Resize(tmps[0], tmps[0], new Size(tmps[0].Width, frame.Height), 0, 0, InterpolationFlags.Area);
+            }
+            if (tmps[0].Width != wt)
+            {
+                Cv2.Resize(tmps[0], tmps[0], new Size(wt, tmps[0].Height), 0, 0, InterpolationFlags.Area);
+            }
+            frame[new Rect(new Point(startw, 0), tmps[0].Size())] = tmps[0];
+            startw += tmps[0].Width;
+            #endregion
+            for (int i = 1; i < source.Count - 1; i++)
+            {
+                var item = source[i];
+                wt = (item.Width == 1 ? arraywidth : (int)(scale * item.Width));
+                Mat tmp;
+                Converter.RNdMatrixToVMat(item, out tmp);
+                if (scale != 1)
+                {
+                    Cv2.Resize(tmp, tmp, new Size(), scale, scale, InterpolationFlags.Area);
+                }
+                if (tmp.Width != wt)
+                {
+                    Cv2.Resize(tmp, tmp, new Size(wt, tmp.Height * arrayscale), 0, 0, InterpolationFlags.Area);
+                }
+                frame[new Rect(new Point(startw, 0), tmp.Size())] = tmp;
+                startw += tmp.Width;
+            }
+            #region Output
+            wt = (source[source.Count - 1].Width == 1 ? arraywidth : (int)(scale * source[source.Count - 1].Width));
+            Converter.RNdMatrixToMat(source[source.Count - 1], out tmps);
+            if (scale != 1)
+            {
+                Cv2.Resize(tmps[0], tmps[0], new Size(), scale, scale, InterpolationFlags.Area);
+            }
+            if (frame.Height < tmps[0].Height)
+            {
+                Cv2.Resize(tmps[0], tmps[0], new Size(tmps[0].Width, frame.Height), 0, 0, InterpolationFlags.Area);
+            }
+            if (tmps[0].Width != wt)
+            {
+                Cv2.Resize(tmps[0], tmps[0], new Size(wt, tmps[0].Height), 0, 0, InterpolationFlags.Area);
+            }
+            frame[new Rect(new Point(startw, 0), tmps[0].Size())] = tmps[0];
+            startw += tmps[0].Width;
+            #endregion
+
+            RNdMatrix mat;
+            Converter.MatToRNdMatrix(new Mat[] { frame }, out mat);
             return mat;
         }
     }

@@ -16,7 +16,7 @@ namespace CNNPlatform
 
         public static bool Terminate { get; set; } = false;
 
-        public static int Generatiion { get; set; } = 0;
+        public static int Generation { get; set; } = 0;
 
         public static void Startup()
         {

@@ -70,5 +70,52 @@ namespace Components.Imaging
 
             frames = framelist.ToArray();
         }
+
+        public static void RNdMatrixToVMat(RNdMatrix mat, out Mat frames)
+        {
+            int batchsize = mat.BatchSize;
+            int ch = mat.Channels;
+            int w = mat.Width, h = mat.Height;
+            int size = w * h;
+            int total = size * ch;
+            frames = new Mat(new Size(w, h * ch), MatType.CV_8UC3, new Scalar(byte.MinValue));
+
+            var framelist = new List<Mat>();
+            byte[] get_p, get_m;
+            var s_p = mat.Data.Select(x => ((x > 0 ? x : 0))).ToArray();
+            var s_m = mat.Data.Select(x => ((x < 0 ? -x : 0))).ToArray();
+
+            var max_p = s_p.Max();
+            var max_m = s_m.Max();
+            var max = Math.Max(max_p, max_m);
+            get_p = s_p.Select(x => (byte)((x / max) * byte.MaxValue)).ToArray();
+            get_m = s_m.Select(x => (byte)((x / max) * byte.MaxValue)).ToArray();
+            //if (max_p > 1 || max_m > 1)
+            //{
+            //    var max = Math.Max(max_p, max_m);
+            //    get_p = s_p.Select(x => (byte)((x / max) * byte.MaxValue)).ToArray();
+            //    get_m = s_m.Select(x => (byte)((x / max) * byte.MaxValue)).ToArray();
+            //}
+            //else
+            //{
+            //    get_p = s_p.Select(x => (byte)(x * byte.MaxValue)).ToArray();
+            //    get_m = s_m.Select(x => (byte)(x * byte.MaxValue)).ToArray();
+            //}
+
+            for (int c = 0; c < ch; c++)
+            {
+                var cframe_t = new Mat(mat.Height, mat.Width, MatType.CV_8UC1, new Scalar(byte.MinValue));
+                var cframe_r = cframe_t.Clone();
+                var cframe_g = cframe_t.Clone();
+                var cframe_b = cframe_t.Clone();
+
+                Marshal.Copy(get_p, c * size, cframe_r.Data, size);
+                Marshal.Copy(get_m, c * size, cframe_b.Data, size);
+
+                var cframe = new Mat(mat.Height, mat.Width, MatType.CV_8UC3);
+                Cv2.Merge(new Mat[] { cframe_b, cframe_g, cframe_r }, cframe);
+                frames[new Rect(new Point(0, c * mat.Height), cframe.Size())] = cframe;
+            }
+        }
     }
 }

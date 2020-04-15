@@ -16,19 +16,23 @@ namespace CNNPlatform.Model
 
         public ModelParameter Instance { get; set; } = null;
 
-        public Model TestModel(int batchcount = 1)
+        public Model TestModel()
         {
-            var model = new CNNPlatform.Model.Model(Instance, batchcount, 64, 64, 3);
+            var model = new CNNPlatform.Model.Model(Instance, 4, 64, 64, 3);
             model.AddConvolution(3, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
             model.AddConvolution(6, 1, 1, Types.Optimizer.AdaSelf);
-            model.AddPooling(2, 1);
-            model.AddConvolution(12, 1, 1, Types.Optimizer.AdaSelf);
-            model.AddPooling(2, 1);
             model.AddConvolution(12, 1, 1, Types.Optimizer.AdaSelf);
             model.AddActivation(Types.Activator.Mish);
-            model.AddAffine(1000, Types.Optimizer.Adam);
+            model.AddPooling(2, 1);
+            model.AddConvolution(12, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddConvolution(24, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddPooling(2, 1);
+            model.AddConvolution(48, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddPooling(2, 1);
+            model.AddAffine(500, Types.Optimizer.Adam);
             model.AddActivation(Types.Activator.ReLU);
+            model.AddAffine(300, Types.Optimizer.Adam);
 
             model.AddReverse();
             return model;

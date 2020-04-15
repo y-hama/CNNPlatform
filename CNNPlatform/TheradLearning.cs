@@ -14,7 +14,7 @@ namespace CNNPlatform
         private TheradLearning() { }
         public static TheradLearning Core { get; private set; } = new TheradLearning();
 
-        public int BatchCount { get; set; } = 1;
+        public int BatchCount { get; set; } = 4;
 
         #region InnerClass       
         private class BufferingData
@@ -57,7 +57,7 @@ namespace CNNPlatform
 
             // Model生成
             Model.Creater.Core.Instance = instance;
-            var model = Model.Creater.Core.TestModel(BatchCount);
+            var model = Model.Creater.Core.TestModel();
             var inputvariavble = model[0].Variable as DedicatedFunction.Variable.VariableBase;
             var outputvariavble = model[model.LayerCount - 1].Variable as DedicatedFunction.Variable.VariableBase;
             using (instance.Lock(Components.Locker.Priority.Critical))
@@ -94,11 +94,11 @@ namespace CNNPlatform
                     BufferingData.Instance.Signal.Wait();
                     using (instance.Lock())
                     {
-                        instance.Generation = Initializer.Generatiion;
+                        instance.Generation = Initializer.Generation;
                         instance.Error = BufferingData.Instance.Error;
                         instance.Weignt = new List<ModelParameter.WeightData>(BufferingData.Instance.Weignt);
                     }
-                    Console.WriteLine(DedicatedFunction.Process.Optimizer.OptimizerBase.Iteration + " / " + Initializer.Generatiion + " / " + BufferingData.Instance.Error);
+                    Console.WriteLine(model.Epoch + " / " + model.Generation + " / " + BufferingData.Instance.Error);
                     BufferingData.Instance.Signal.Reset();
                     BufferingData.Instance.UpdateSignal.Signal();
                 }
@@ -106,9 +106,9 @@ namespace CNNPlatform
             #endregion
 
             bool iteration = false;
-            #region SourceLoadProcess
             Components.Imaging.FileLoader.Instance.SetSourceLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
             Components.Imaging.FileLoader.Instance.SetResultLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/result/"));
+            #region SourceLoadProcess
             new Task(() =>
             {
                 Components.RNdMatrix i, t;
@@ -128,47 +128,17 @@ namespace CNNPlatform
             #endregion
 
             #region LearningProcess
+            Components.RNdMatrix input = new Components.RNdMatrix(inputvariavble.Input.Shape);
             Components.RNdMatrix teacher = new Components.RNdMatrix(outputvariavble.Output.Shape);
             while (!Initializer.Terminate)
             {
                 ImageData.Instance.LoadSignal.Wait();
-                inputvariavble.Input.Data = ImageData.Instance.Input.Data.Clone() as Components.Real[];
+                input.Data = ImageData.Instance.Input.Data.Clone() as Components.Real[];
                 teacher.Data = ImageData.Instance.Teacher.Data.Clone() as Components.Real[];
                 ImageData.Instance.ResetSignal.Signal();
-                if (iteration)
-                {
-                    iteration = false;
-                    DedicatedFunction.Process.Optimizer.OptimizerBase.Iteration++;
-                    model.Epoch = (int)DedicatedFunction.Process.Optimizer.OptimizerBase.Iteration;
-                }
 
-                #region LearningProcess
-                for (int i = 0; i < model.LayerCount; i++)
-                {
-                    model[i].ForwardFunction.Do(model[i].Variable);
-                    if (i < model.LayerCount - 1)
-                    {
-                        (model[i].Variable as DedicatedFunction.Variable.VariableBase).Output.CopyTo((model[i + 1].Variable as DedicatedFunction.Variable.VariableBase).Input);
-                        //(model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
-                    }
-                }
-                outputvariavble.Sigma = outputvariavble.Output - teacher;
-                for (int i = model.LayerCount - 1; i >= 0; i--)
-                {
-                    model[i].BackFunction.Do(model[i].Variable);
-                    if (i > 0)
-                    {
-                        (model[i].Variable as DedicatedFunction.Variable.VariableBase).Propagator.CopyTo((model[i - 1].Variable as DedicatedFunction.Variable.VariableBase).Sigma);
-                        //(model[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model[i].Variable as Function.Variable.VariableBase).Propagator;
-                    }
-                }
-                Initializer.Generatiion++;
-                model.Generation = Initializer.Generatiion;
-                model.Error = outputvariavble.Error[0];
-                #endregion
-
-                var viweset = new Components.RNdMatrix[] { inputvariavble.Input, teacher, (Components.RNdMatrix)outputvariavble.Sigma.Abs(), outputvariavble.Output };
-                result = Components.Imaging.View.ConvertToShow(viweset, 640, 480);//, inputvariavble.InWidth, inputvariavble.InHeight
+                model.Learning(input, teacher, iteration);
+                result = model.ShowProcess(1.5);
 
                 #region Overwrite Signal
                 if (BufferingData.Instance.Signal.CurrentCount == BufferingData.Instance.Signal.InitialCount)

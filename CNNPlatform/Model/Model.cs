@@ -152,6 +152,8 @@ namespace CNNPlatform.Model
                     OutWidth = variable.InWidth,
                     OutHeight = variable.InHeight,
 
+                    OptimizerType = variable.OptimizerType,
+                    Rho = variable.Rho,
                 }.Confirm(Instance),
             };
         }
@@ -161,20 +163,20 @@ namespace CNNPlatform.Model
         public void AddReverse()
         {
             var list = new List<Layer.LayerBase>();
-            if (Layer[LayerCount - 1] is Layer.Convolution)
-            {
-                list.Add(ReverseConvolution(Layer[LayerCount - 1].Variable));
-            }
-            else if (Layer[LayerCount - 1] is Layer.Pooling)
-            {
-                list.Add(ReversePooling(Layer[LayerCount - 1].Variable));
-            }
-            else if (Layer[LayerCount - 1] is Layer.Affine)
-            {
-                list.Add(ReverseAffine(Layer[LayerCount - 1].Variable));
-            }
+            //if (Layer[LayerCount - 1] is Layer.Convolution)
+            //{
+            //    list.Add(ReverseConvolution(Layer[LayerCount - 1].Variable));
+            //}
+            //else if (Layer[LayerCount - 1] is Layer.Pooling)
+            //{
+            //    list.Add(ReversePooling(Layer[LayerCount - 1].Variable));
+            //}
+            //else if (Layer[LayerCount - 1] is Layer.Affine)
+            //{
+            //    list.Add(ReverseAffine(Layer[LayerCount - 1].Variable));
+            //}
 
-            for (int i = LayerCount - 2; i >= 0; i--)
+            for (int i = LayerCount - 1; i >= 0; i--)
             {
                 var type = Layer[i].GetType();
                 if (Layer[i] is Layer.Convolution)
@@ -288,6 +290,70 @@ namespace CNNPlatform.Model
                     Rho = rho,
                 }.Confirm(Instance),
             });
+        }
+        #endregion
+
+        #region Process
+        private Components.RNdMatrix Teacher { get; set; } = new Components.RNdMatrix(new int[] { 0, 0, 0, 0 });
+        public void Learning(Components.RNdMatrix input, Components.RNdMatrix teacher, bool isIteration)
+        {
+            if (isIteration)
+            {
+                DedicatedFunction.Process.Optimizer.OptimizerBase.Iteration++;
+                Epoch = (int)DedicatedFunction.Process.Optimizer.OptimizerBase.Iteration;
+            }
+            Layer[0].Variable.Input = input;
+            Teacher = teacher;
+            #region LearningProcess
+            for (int i = 0; i < LayerCount; i++)
+            {
+                this[i].ForwardFunction.Do(this[i].Variable);
+                if (i < this.LayerCount - 1)
+                {
+                    (this[i].Variable as DedicatedFunction.Variable.VariableBase).Output.CopyTo((this[i + 1].Variable as DedicatedFunction.Variable.VariableBase).Input);
+                    //(model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
+                }
+            }
+            Layer[LayerCount - 1].Variable.Sigma = Layer[LayerCount - 1].Variable.Output - teacher;
+            for (int i = this.LayerCount - 1; i >= 0; i--)
+            {
+                this[i].BackFunction.Do(this[i].Variable);
+                if (i > 0)
+                {
+                    (this[i].Variable as DedicatedFunction.Variable.VariableBase).Propagator.CopyTo((this[i - 1].Variable as DedicatedFunction.Variable.VariableBase).Sigma);
+                    //(model[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model[i].Variable as Function.Variable.VariableBase).Propagator;
+                }
+            }
+            Initializer.Generation++;
+            this.Generation = Initializer.Generation;
+            this.Error = Layer[LayerCount - 1].Variable.Error[0];
+            #endregion
+        }
+        #endregion
+
+        #region Visualize
+        public Components.RNdMatrix ShowResult(int width, int height)
+        {
+            var viweset = new Components.RNdMatrix[]
+            {
+                Layer[0].Variable.Input,
+                Teacher,
+                (Components.RNdMatrix)Layer[LayerCount - 1].Variable.Sigma.Abs(),
+                Layer[LayerCount - 1].Variable.Output,
+            };
+            return Components.Imaging.View.ConvertToResultImage(viweset, width, height);
+        }
+
+        public Components.RNdMatrix ShowProcess(double scale = 1)
+        {
+            List<Components.RNdMatrix> source = new List<Components.RNdMatrix>();
+            source.Add(Layer[0].Variable.Input.Clone() as Components.RNdMatrix);
+            for (int i = 0; i < LayerCount; i++)
+            {
+                source.Add(Layer[i].Variable.Output.Clone() as Components.RNdMatrix);
+            }
+            source.Add(Layer[LayerCount - 1].Variable.Output.Clone() as Components.RNdMatrix);
+            return Components.Imaging.View.ConvertToProcessImage(source, scale);
         }
         #endregion
     }

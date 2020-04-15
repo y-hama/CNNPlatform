@@ -74,7 +74,21 @@ namespace Components
         }
         #endregion
 
-        public static Random RandomSource { get; } = new Random();
+        #region Random
+        private static Random random = new Random();
+        private static object _____randlock = new object();
+        public static Random RandomSource { get { lock (_____randlock) { return random; } } }
+        public static double GetRandomValue(double ave = 0, double sigma = 1, double edging = 1)
+        {
+            double x, y;
+            lock (_____randlock)
+            {
+                x = random.NextDouble();
+                y = random.NextDouble();
+            }
+            return sigma * Math.Pow(Math.Sqrt(-2.0 * Math.Log(x)) * Math.Cos(2.0 * Math.PI * y), edging) + ave;
+        }
+        #endregion
 
         public delegate void CatchExceptionEventHandler(Exception ex);
         private static CatchExceptionEventHandler CatchExceptionHandler { get; set; }

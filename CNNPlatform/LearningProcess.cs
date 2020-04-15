@@ -47,7 +47,7 @@ namespace CNNPlatform
             Console.WriteLine(BatchCount);
             var instance = (Utility.Shared.ModelParameter)Components.Locker.ObjectLocker.CreateServer(Utility.Shared.ModelParameter.ChannelName, Utility.Shared.ModelParameter.ObjectName, typeof(Utility.Shared.ModelParameter));
             Model.Creater.Core.Instance = instance;
-            var model = Model.Creater.Core.TestModel(BatchCount);
+            var model = Model.Creater.Core.TestModel();
 
             var inputvariavble = model[0].Variable as DedicatedFunction.Variable.VariableBase;
             var outputvariavble = model[model.LayerCount - 1].Variable as DedicatedFunction.Variable.VariableBase;
@@ -67,7 +67,7 @@ namespace CNNPlatform
                     using (instance.Lock())
                     {
                         //Initializer.Terminate = instance.ExitApplication;
-                        instance.Generation = Initializer.Generatiion;
+                        instance.Generation = Initializer.Generation;
                         instance.Error = BufferingData.Instance.Error;
                         instance.Weignt = new List<Utility.Shared.ModelParameter.WeightData>(BufferingData.Instance.Weignt);
                     }
@@ -139,7 +139,7 @@ namespace CNNPlatform
                         error += Math.Abs(outputvariavble.Sigma.Data[i]);
                     }
                     error /= outputvariavble.Sigma.Length;
-                    Initializer.Generatiion++;
+                    Initializer.Generation++;
                     #endregion
 
                     Components.Imaging.View.Show(
