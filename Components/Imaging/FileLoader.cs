@@ -195,6 +195,8 @@ namespace Components.Imaging
                 var mat1 = (index[0].Container);
                 var mat2 = (index[1].Container);
 
+                bool flipx = (State.RandomSource.NextDouble() > 0.5 ? true : false);
+                bool flipy = (State.RandomSource.NextDouble() > 0.5 ? true : false);
                 int oflux, ofluy;
                 int ofrdx, ofrdy;
                 double scl = 2.5;
@@ -214,7 +216,7 @@ namespace Components.Imaging
                     else { throw new Exception(); }
                 }
                 sframe = sframe.Resize(new Size(inw, inh), 0, 0, InterpolationFlags.Area);
-                sframe = Offset(sframe, lu, rd);
+                sframe = Offset(sframe, lu, rd, flipx, flipy);
                 sframes.Add(sframe.Clone());
 
                 var tframe = mat2.Clone();
@@ -225,7 +227,7 @@ namespace Components.Imaging
                     else { throw new Exception(); }
                 }
                 tframe = Effect(tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area));
-                tframe = Offset(tframe, lu, rd);
+                tframe = Offset(tframe, lu, rd, flipx, flipy);
                 tframes.Add(tframe.Clone());
             }
 
@@ -248,9 +250,25 @@ namespace Components.Imaging
             return frame;
         }
 
-        private Mat Offset(Mat source, Point leftup, Point rightdown)
+        private Mat Offset(Mat source, Point leftup, Point rightdown, bool flipx, bool flipy)
         {
-            Mat frame = source.Clone()[new Rect(leftup, new Size(source.Width - (leftup.X + rightdown.X), source.Height - (leftup.Y + rightdown.Y)))];
+            Mat frame = source.Clone();
+            if (flipx && flipy)
+            {
+                frame = frame.Flip(FlipMode.XY);
+            }
+            else
+            {
+                if (flipx)
+                {
+                    frame = frame.Flip(FlipMode.X);
+                }
+                if (flipy)
+                {
+                    frame = frame.Flip(FlipMode.Y);
+                }
+            }
+            frame = frame.Clone()[new Rect(leftup, new Size(source.Width - (leftup.X + rightdown.X), source.Height - (leftup.Y + rightdown.Y)))];
             return frame.Resize(source.Size());
         }
     }
