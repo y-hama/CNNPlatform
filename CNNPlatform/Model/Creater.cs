@@ -23,8 +23,8 @@ namespace CNNPlatform.Model
             model.AddPooling(2, 1);
             model.AddConvolution(12, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
-            model.AddConvolution(24, 2, 2, Types.Optimizer.AdaSelf);
-            model.AddActivation(Types.Activator.ReLU);
+            model.AddConvolution(24, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddActivation(Types.Activator.Mish);
             model.AddPooling(2, 1);
             model.AddConvolution(48, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
