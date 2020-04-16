@@ -29,17 +29,17 @@ namespace CNNPlatform.Model
         private ModelParameter Instance { get; set; }
 
         private int BatchCount { get; set; }
+        private int InputChannels { get; set; }
         private int InputWidth { get; set; }
         private int InputHeight { get; set; }
-        private int InputChannels { get; set; }
 
-        public Model(ModelParameter instance, int batch, int inputWidth, int inputHeight, int inputChannels)
+        public Model(ModelParameter instance, int batch, int inputChannels, int inputWidth, int inputHeight)
         {
             Instance = instance;
             BatchCount = batch;
+            InputChannels = inputChannels;
             InputWidth = inputWidth;
             InputHeight = inputHeight;
-            InputChannels = inputChannels;
         }
 
         public void Save(string filename)
@@ -311,7 +311,6 @@ namespace CNNPlatform.Model
                 if (i < this.LayerCount - 1)
                 {
                     (this[i].Variable as DedicatedFunction.Variable.VariableBase).Output.CopyTo((this[i + 1].Variable as DedicatedFunction.Variable.VariableBase).Input);
-                    //(model[i + 1].Variable as Function.Variable.VariableBase).Input = (model[i].Variable as Function.Variable.VariableBase).Output;
                 }
             }
             Layer[LayerCount - 1].Variable.Sigma = Layer[LayerCount - 1].Variable.Output - teacher;
@@ -321,7 +320,6 @@ namespace CNNPlatform.Model
                 if (i > 0)
                 {
                     (this[i].Variable as DedicatedFunction.Variable.VariableBase).Propagator.CopyTo((this[i - 1].Variable as DedicatedFunction.Variable.VariableBase).Sigma);
-                    //(model[i - 1].Variable as Function.Variable.VariableBase).Sigma = (model[i].Variable as Function.Variable.VariableBase).Propagator;
                 }
             }
             Initializer.Generation++;
@@ -347,12 +345,10 @@ namespace CNNPlatform.Model
         public Components.RNdMatrix ShowProcess(double scale = 1)
         {
             List<Components.RNdMatrix> source = new List<Components.RNdMatrix>();
-            source.Add(Layer[0].Variable.Input.Clone() as Components.RNdMatrix);
             for (int i = 0; i < LayerCount; i++)
             {
                 source.Add(Layer[i].Variable.Output.Clone() as Components.RNdMatrix);
             }
-            source.Add(Layer[LayerCount - 1].Variable.Output.Clone() as Components.RNdMatrix);
             return Components.Imaging.View.ConvertToProcessImage(source, scale);
         }
         #endregion

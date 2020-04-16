@@ -101,6 +101,7 @@ namespace CNNPlatform.DedicatedFunction.Process
                 int ool = (int)(i0 / (InArea + 1));
                 int iil = i0 - (int)(ool * (InArea + 1));
                 int widx = ool * (InArea + 1) + (iil);
+                dWeight[widx] = 0;
                 for (int b = 0; b < BatchCount; b++)
                 {
                     int sidx = b * OutArea + ool;

@@ -21,10 +21,10 @@ namespace Components.GPGPU.Function
             error[1] = 0;
             Parallel(0, sigma.Length, i0 =>
             {
-                error[0] += Math.Abs(sigma[i0]);
+                error[0] += sigma[i0] * sigma[i0];
                 error[1] += (sigma[i0] - ave) * (sigma[i0] - ave);
             });
-            error[0] /= sigma.Length;
+            //error[0] /= sigma.Length;
             error[1] /= sigma.Length;
             error[1] = Math.Sqrt(error[1]);
         }

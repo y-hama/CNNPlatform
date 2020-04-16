@@ -91,7 +91,7 @@ namespace CNNPlatform.DedicatedFunction.Process
                     Parallel(0, OutTotal, i0 =>
                     {
                         float x = Output[i0];
-                        Propagator[i0] = (x > 0 ? 1 : 0.01) * Sigma[i0];
+                        Propagator[i0] = (x > 0 ? 1 : 0) * Sigma[i0];
                     });
                     break;
                 case Utility.Types.Activator.Mish:

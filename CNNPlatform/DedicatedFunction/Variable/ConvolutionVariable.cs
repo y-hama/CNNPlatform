@@ -47,8 +47,8 @@ namespace CNNPlatform.DedicatedFunction.Variable
                 var w = new Utility.Shared.ModelParameter.WeightData(2);
                 w.Data[0] = new Components.RNdMatrix(OutputChannels, 1, 1, 1);
                 w.Data[1] = new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1);
-                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 1.0 / (InputChannels * KernelLength));
-                Utility.Randomizer.Noize(ref w.Data[1].Data, Utility.Randomizer.Sign.Both, 1.0 / (KernelLength));
+                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0, 1.0 / (InputChannels * KernelLength));
+                Utility.Randomizer.Noize(ref w.Data[1].Data, Utility.Randomizer.Sign.Both, 0, 1.0 / (KernelLength));
                 obj.Weignt.Add(w);
 
                 WeightBias = new Components.RNdMatrix(w.Data[0].Shape);

@@ -44,14 +44,14 @@ namespace CNNPlatform.Utility
             Plus,
             Minus,
         }
-        public static void Noize(ref Components.Real[] data, Sign sign = Sign.Both, double amplify = 1.0)
+        public static void Noize(ref Components.Real[] data, Sign sign = Sign.Both, double center = 0, double amplify = 1.0)
         {
             switch (sign)
             {
                 case Sign.Both:
                     for (int i = 0; i < data.Length; i++)
                     {
-                        data[i] = BMR(0, amplify);
+                        data[i] = BMR(center, amplify);
                     }
                     break;
                 case Sign.Plus:

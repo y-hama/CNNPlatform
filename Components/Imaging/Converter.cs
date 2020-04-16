@@ -85,11 +85,26 @@ namespace Components.Imaging
             var s_p = mat.Data.Select(x => ((x > 0 ? x : 0))).ToArray();
             var s_m = mat.Data.Select(x => ((x < 0 ? -x : 0))).ToArray();
 
+            if (w == 1)
+            { }
             var max_p = s_p.Max();
             var max_m = s_m.Max();
+            var min_p = s_p.Min(x => x == 0 ? byte.MaxValue : x);
+            var min_m = s_m.Min(x => x == 0 ? byte.MaxValue : x);
             var max = Math.Max(max_p, max_m);
-            get_p = s_p.Select(x => (byte)((x / max) * byte.MaxValue)).ToArray();
-            get_m = s_m.Select(x => (byte)((x / max) * byte.MaxValue)).ToArray();
+            //var min = Math.Min(min_p, min_m);
+            var min = 0;
+            var dlt = max - min;
+            if (dlt > 0)
+            {
+                get_p = s_p.Select(x => (byte)(((x - min) / dlt) * byte.MaxValue)).ToArray();
+                get_m = s_m.Select(x => (byte)(((x - min) / dlt) * byte.MaxValue)).ToArray();
+            }
+            else
+            {
+                get_p = s_p.Select(x => (byte)(x * byte.MaxValue)).ToArray();
+                get_m = s_m.Select(x => (byte)(x * byte.MaxValue)).ToArray(); ;
+            }
             //if (max_p > 1 || max_m > 1)
             //{
             //    var max = Math.Max(max_p, max_m);

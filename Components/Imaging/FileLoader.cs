@@ -194,6 +194,18 @@ namespace Components.Imaging
                 ret |= check;
                 var mat1 = (index[0].Container);
                 var mat2 = (index[1].Container);
+
+                int oflux, ofluy;
+                int ofrdx, ofrdy;
+                double scl = 2.5;
+                oflux = State.RandomSource.Next((int)(outw / (scl)) - 1);
+                ofluy = State.RandomSource.Next((int)(outw / (scl)) - 1);
+                ofrdx = State.RandomSource.Next((int)(outw / (scl)) - 1);
+                ofrdy = State.RandomSource.Next((int)(outw / (scl)) - 1);
+                Point lu, rd;
+                lu = new Point(oflux, ofluy);
+                rd = new Point(ofrdx, ofrdy);
+
                 var sframe = mat1.Clone();
                 if (inchannels != sframe.Channels())
                 {
@@ -202,6 +214,7 @@ namespace Components.Imaging
                     else { throw new Exception(); }
                 }
                 sframe = sframe.Resize(new Size(inw, inh), 0, 0, InterpolationFlags.Area);
+                sframe = Offset(sframe, lu, rd);
                 sframes.Add(sframe.Clone());
 
                 var tframe = mat2.Clone();
@@ -212,7 +225,7 @@ namespace Components.Imaging
                     else { throw new Exception(); }
                 }
                 tframe = Effect(tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area));
-                tframe = Effect(tframe);
+                tframe = Offset(tframe, lu, rd);
                 tframes.Add(tframe.Clone());
             }
 
@@ -235,11 +248,10 @@ namespace Components.Imaging
             return frame;
         }
 
-        private Mat Offset(Mat source)
+        private Mat Offset(Mat source, Point leftup, Point rightdown)
         {
-            Mat frame = source.Clone();
-
-            return frame;
+            Mat frame = source.Clone()[new Rect(leftup, new Size(source.Width - (leftup.X + rightdown.X), source.Height - (leftup.Y + rightdown.Y)))];
+            return frame.Resize(source.Size());
         }
     }
 }

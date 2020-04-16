@@ -67,8 +67,9 @@ namespace CNNPlatform
             }
 
             #region LockProcess
+            Components.RNdMatrix process = null;
             Components.RNdMatrix result = null;
-            new Task(() =>
+            new System.Threading.Thread(() =>
             {
                 while (!Initializer.Terminate)
                 {
@@ -82,12 +83,13 @@ namespace CNNPlatform
                             if (processParameter.Result == null) { processParameter.Result = new Components.RNdMatrix(result.Shape); }
                             result.CopyTo(processParameter.Result);
                         }
-                        Components.Imaging.View.Show(result, "sample");
+                        Components.Imaging.View.Show(result, "result");
+                        Components.Imaging.View.Show(process, "process");
                     }
                     BufferingData.Instance.UpdateSignal.Wait();
                 }
             }).Start();
-            new Task(() =>
+            new System.Threading.Thread(() =>
             {
                 while (!Initializer.Terminate)
                 {
@@ -98,16 +100,18 @@ namespace CNNPlatform
                         instance.Error = BufferingData.Instance.Error;
                         instance.Weignt = new List<ModelParameter.WeightData>(BufferingData.Instance.Weignt);
                     }
-                    Console.WriteLine(model.Epoch + " / " + model.Generation + " / " + BufferingData.Instance.Error);
                     BufferingData.Instance.Signal.Reset();
-                    BufferingData.Instance.UpdateSignal.Signal();
+                    if (BufferingData.Instance.UpdateSignal.CurrentCount > 0)
+                    {
+                        BufferingData.Instance.UpdateSignal.Signal();
+                    }
                 }
             }).Start();
             #endregion
 
             bool iteration = false;
             Components.Imaging.FileLoader.Instance.SetSourceLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/"));
-            Components.Imaging.FileLoader.Instance.SetResultLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/result/"));
+            //Components.Imaging.FileLoader.Instance.SetResultLocation(new System.IO.DirectoryInfo(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/result/"));
             #region SourceLoadProcess
             new Task(() =>
             {
@@ -135,15 +139,19 @@ namespace CNNPlatform
                 ImageData.Instance.LoadSignal.Wait();
                 input.Data = ImageData.Instance.Input.Data.Clone() as Components.Real[];
                 teacher.Data = ImageData.Instance.Teacher.Data.Clone() as Components.Real[];
-                ImageData.Instance.ResetSignal.Signal();
+                if (ImageData.Instance.ResetSignal.CurrentCount > 0)
+                {
+                    ImageData.Instance.ResetSignal.Signal();
+                }
 
                 model.Learning(input, teacher, iteration);
-                result = model.ShowProcess(1.5);
+                result = model.ShowResult(640, 480);
+                process = model.ShowProcess();
 
                 #region Overwrite Signal
                 if (BufferingData.Instance.Signal.CurrentCount == BufferingData.Instance.Signal.InitialCount)
                 {
-                    BufferingData.Instance.Error = outputvariavble.Error[1];
+                    BufferingData.Instance.Error = outputvariavble.Error[0];
                     for (int i = 0; i < model.LayerCount; i++)
                     {
                         var _weight = (object)BufferingData.Instance.Weignt[i];
@@ -153,8 +161,8 @@ namespace CNNPlatform
                 }
                 #endregion
 
+                Console.WriteLine(model.Epoch + " / " + model.Generation + " / " + BufferingData.Instance.Error);
                 //model.Save("test.mdl");
-                //Console.WriteLine(@"gen/" + Initializer.Generatiion + @" err/" + error);
                 GC.Collect();
             }
             #endregion

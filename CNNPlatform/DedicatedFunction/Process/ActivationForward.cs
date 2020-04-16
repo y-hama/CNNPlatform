@@ -81,7 +81,7 @@ namespace CNNPlatform.DedicatedFunction.Process
                     Parallel(0, OutTotal, i0 =>
                     {
                         float x = Input[i0];
-                        Output[i0] = (x > 0 ? 1 : 0.01) * x;
+                        Output[i0] = (x > 0 ? 1 : 0) * x;
                     });
                     break;
                 case Utility.Types.Activator.Mish:

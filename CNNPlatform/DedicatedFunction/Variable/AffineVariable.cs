@@ -32,7 +32,7 @@ namespace CNNPlatform.DedicatedFunction.Variable
                 var obj = shared as Utility.Shared.ModelParameter;
                 var w = new Utility.Shared.ModelParameter.WeightData(2);
                 w.Data[0] = new Components.RNdMatrix(InArea + 1, OutArea, 1, 1);
-                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 1.0 / (InArea));
+                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0, 1.0 / (InArea));
                 obj.Weignt.Add(w);
 
                 Weight = new Components.RNdMatrix(w.Data[0].Shape);
