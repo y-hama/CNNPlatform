@@ -155,7 +155,7 @@ namespace CNNPlatform.DedicatedFunction.Process
 
         public override void Update()
         {
-            CalcurationError(ref Error, Sigma);
+            (Variable as DedicatedFunction.Variable.VariableBase).CalcurationError(ref Error);
         }
     }
 }

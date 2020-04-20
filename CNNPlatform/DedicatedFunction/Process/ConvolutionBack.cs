@@ -300,7 +300,7 @@ namespace CNNPlatform.DedicatedFunction.Process
 
         public override void Update()
         {
-            CalcurationError(ref Error, Sigma);
+            (Variable as DedicatedFunction.Variable.VariableBase).CalcurationError(ref Error);
 
             double ep = (OutScale == 0 ? 1 : 1.0 / OutScale) * ((double)KernelLength / (InputChannels * OutputChannels));
             Difference[0] = BiasOptimizer.Update(ref WeightBias, dBias, ep * rho);

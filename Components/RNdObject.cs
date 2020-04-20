@@ -8,11 +8,18 @@ namespace Components
     [Serializable]
     public abstract class RNdObject
     {
+        public string Hash { get; protected set; }
+
         public Real[] Data;
 
         public static RNdObject Zeros()
         {
             return new RNdMatrix(0, 0, 0, 0);
+        }
+
+        public RNdObject()
+        {
+            Hash = Locker.HashCreator.GetString(64);
         }
 
         public int[] Shape { get; protected set; }
@@ -40,6 +47,18 @@ namespace Components
 
         public abstract RNdObject Clone();
         //public abstract void Show(string name, int batchindex = 0);
+
+        public void Save(System.IO.DirectoryInfo location)
+        {
+            string name = location.FullName + @"\" + Hash;
+            Locker.FileConverter.SaveToBinaryFile(this, name);
+        }
+
+        public static RNdObject Load(System.IO.DirectoryInfo location, string hash)
+        {
+            string name = location.FullName + @"\" + hash;
+            return Locker.FileConverter.LoadFromBinaryFile(name) as RNdObject;
+        }
 
         public static RNdObject operator -(RNdObject o1, RNdObject o2)
         {

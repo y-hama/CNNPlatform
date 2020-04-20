@@ -83,6 +83,7 @@
     <Compile Include="Process\Inference\Thread.cs" />
     <Compile Include="Process\Learning\Thread.cs" />
     <Compile Include="Process\Task\InputLoader.cs" />
+    <Compile Include="Process\Task\ModelSaver.cs" />
     <Compile Include="Process\ThreadBase.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

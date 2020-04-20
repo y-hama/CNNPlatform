@@ -16,9 +16,11 @@ namespace CNNPlatform.Model
 
         public ModelParameter Instance { get; set; } = null;
 
+        public int BatchCount { get; set; } = 4;
+
         public Model BasicImageCreater()
         {
-            var model = new CNNPlatform.Model.Model(Instance, 4, 3, 64, 64);
+            var model = new CNNPlatform.Model.Model(Instance, BatchCount, 3, 64, 64);
 
             model.AddConvolution(16, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
@@ -39,7 +41,7 @@ namespace CNNPlatform.Model
 
         public Model test()
         {
-            var model = new CNNPlatform.Model.Model(Instance, 4, 3, 8, 8);
+            var model = new CNNPlatform.Model.Model(Instance, BatchCount, 3, 8, 8);
 
             model.AddAffine(100);
 

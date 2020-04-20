@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using Components;
 
 namespace CNNPlatform.DedicatedFunction.Variable
 {
@@ -61,6 +64,20 @@ namespace CNNPlatform.DedicatedFunction.Variable
         {
             string res = string.Empty;
             return res;
+        }
+
+        protected override void DecodeParameterCore(object[] values)
+        {
+            CompressSize = Convert.ToInt32(values[0]);
+            ExpandSize = Convert.ToInt32(values[1]);
+        }
+
+        protected override void DecodeOption(List<object> values)
+        {
+        }
+
+        public override void SaveObject(DirectoryInfo location)
+        {
         }
 
         public override void CoreClone(ref VariableBase _clone)

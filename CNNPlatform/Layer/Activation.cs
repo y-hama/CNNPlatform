@@ -8,7 +8,11 @@ namespace CNNPlatform.Layer
 {
     class Activation : LayerBase
     {
-        public Activation()
+        public Activation(bool createFunctions) : base(createFunctions)
+        {
+        }
+
+        protected override void FunctionCreator()
         {
             ForwardFunction = new DedicatedFunction.Process.ActivationForward();
             BackFunction = new DedicatedFunction.Process.ActivationBack();

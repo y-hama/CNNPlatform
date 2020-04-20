@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 namespace Components
 {
     [Serializable]
-    public class RNdArray : RNdObject
+    internal class RNdArray : RNdObject
     {
         #region Constructor
         private RNdArray() { }
@@ -58,7 +58,9 @@ namespace Components
 
         public override RNdObject Clone()
         {
-            var array = new RNdArray() { Data = (Real[])Data.Clone(), Shape = (int[])Shape.Clone() };
+            var cl = new Real[Data.Length];
+            Array.Copy(Data, 0, cl, 0, Data.Length);
+            var array = new RNdArray() { Hash = this.Hash, Data = cl, Shape = (int[])Shape.Clone() };
             return array;
         }
 

@@ -17,9 +17,11 @@ namespace CNNPlatform.Process.Learning
 
         private bool IterationFlag { get; set; }
 
-        public string LoadFolder { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"/sample/";
+        public string LoadFolder { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\sample\";
 
-        private Model.Model ModelClone { get; set; }
+        private Task.ModelSaver ModelSaver { get; set; }
+
+        protected override int BatchCount { get { return 4; } }
 
         protected override void SetInputLoaderOption()
         {
@@ -30,9 +32,9 @@ namespace CNNPlatform.Process.Learning
 
         protected override void CreateModelWriter()
         {
-
-
-            new System.Threading.Thread(() => { }).Start();
+            ModelSaver = new CNNPlatform.Process.Task.ModelSaver();
+            ModelSaver.SetLocation(new System.IO.DirectoryInfo(ModelSaveFolder));
+            ModelSaver.Start();
         }
 
         protected override void LoadInput()
@@ -44,26 +46,21 @@ namespace CNNPlatform.Process.Learning
 
         protected override void Process()
         {
-            //Model.Learning(Input, Teacher, IterationFlag);
+            if (IterationFlag)
+            {
+                ModelSaver.Pushback(Model.Clone());
+                ModelSaver.Request.Set();
+            }
+
+            Model.Learning(Input, Teacher, IterationFlag);
 
             var result = Model.ShowResult(640, 480);
             var process = Model.ShowProcess();
             Components.Imaging.View.Show(result, "result");
             Components.Imaging.View.Show(process, "process");
             var span = (DateTime.Now - StartTime);
-            Console.WriteLine(Model.Epoch + " / " + Model.Generation + " / " + Model.InputLayer.Variable.Error[0] +
+            Console.WriteLine(Model.Epoch + " / " + Model.Generation + " / " + Model.OutputLayer.Variable.Error[0] +
                 "  :" + span.Days + ":" + span.Hours + ":" + span.Minutes + ":" + span.Seconds + "'" + span.Milliseconds);
-
-            // セーブ中じゃなかったら・・・
-            // コピー中にして
-            // コピー
-            ModelClone = Model.Clone();
-            ModelClone.Save("test.mdl");
-            // セーブ中を解除
-        }
-
-        public void Save(string path)
-        {
 
         }
     }

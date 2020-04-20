@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Components;
 
 namespace CNNPlatform.DedicatedFunction.Variable
 {
@@ -26,7 +28,6 @@ namespace CNNPlatform.DedicatedFunction.Variable
             OutputChannels = InputChannels;
             OutWidth = InWidth;
             OutHeight = InHeight;
-
             if (shared != null)
             {
                 var obj = shared as Utility.Shared.ModelParameter;
@@ -45,12 +46,26 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         protected override void EncodeParameterCore(ref string res)
         {
+            res += ActivationType.ToString() + " ";
         }
 
         public override string EncodeOption()
         {
             string res = string.Empty;
             return res;
+        }
+
+        protected override void DecodeParameterCore(object[] values)
+        {
+            ActivationType = (Utility.Types.Activator)Enum.Parse(typeof(Utility.Types.Activator), values[0].ToString());
+        }
+
+        protected override void DecodeOption(List<object> values)
+        {
+        }
+
+        public override void SaveObject(DirectoryInfo location)
+        {
         }
 
         public override void CoreClone(ref VariableBase _clone)

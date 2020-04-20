@@ -95,6 +95,8 @@ namespace Components.GPGPU.Function
 
         private int BufferNNameIndex { get; set; } = 0;
 
+        protected ComputeVariable Variable { get; private set; }
+
         protected bool OptionCreated { get; set; } = false;
         #endregion
 
@@ -251,6 +253,7 @@ namespace Components.GPGPU.Function
             DateTime start = DateTime.Now;
             try
             {
+                Variable = variable;
                 _cParam = variable.Parameter;
                 ConvertVariable(variable);
                 OptionCreater();

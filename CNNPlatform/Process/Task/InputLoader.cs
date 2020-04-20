@@ -57,13 +57,18 @@ namespace CNNPlatform.Process.Task
             }
             #endregion
 
-            new System.Threading.Thread(() => Process()).Start();
+            new System.Threading.Thread(() => Process())
+            {
+                Priority = ThreadPriority.AboveNormal,
+            }.Start();
         }
 
         private void Process()
         {
             while (!Initializer.Terminate)
             {
+                Request.Reset();
+                Load.Reset();
                 switch (InputSource)
                 {
                     case Source.Null:

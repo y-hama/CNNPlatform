@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CNNPlatform.Layer
 {
-    class LayerBase
+    abstract class LayerBase
     {
         public enum DirectionPattern
         {
@@ -23,32 +23,59 @@ namespace CNNPlatform.Layer
 
         public string ParameterStatus { get { return Variable.GetStatus + " " + Variable.GetSizeStatus; } }
 
+        protected LayerBase(bool createFunctions)
+        {
+            if (createFunctions)
+            {
+                FunctionCreator();
+            }
+        }
+
+        protected abstract void FunctionCreator();
+
+        public void RefreshError()
+        {
+            for (int i = 0; i < Variable.Error.Length; i++)
+            {
+                Variable.Error[i] = 0;
+            }
+        }
+
         public string Encode()
         {
-            string res = "!!>\n";
+            string res = "!!!!!!!!!!>";
             res += this.GetType().ToString() + "\n";
             res += Direction.ToString() + "\n";
-            res += ForwardFunction.GetType().ToString() + "\n";
-            res += BackFunction.GetType().ToString() + "\n";
             res += Variable.GetType().ToString() + "\n";
-            res += "!!!>\n";
-            res += ":>" + Variable.EncodeParameter() + "\n";
-            res += ";>\n" + Variable.EncodeOption() + "\n";
+            res += "!!!!!>";
+            res += Variable.EncodeParameter() + "\n";
+            res += ";>" + Variable.EncodeOption() + "\n";
 
             return res + "\n";
         }
 
-        public LayerBase Decode(string text)
+        public static LayerBase Decode(string location, string text, Utility.Shared.ModelParameter instance, int batchcount)
         {
-            return null;
+            var split = text.Split(new string[] { "!!!!!>" }, StringSplitOptions.RemoveEmptyEntries);
+            LayerBase layer;
+            var layerbaseparam = split[0];
+            #region
+            var lbparams = layerbaseparam.Split('\n');
+            layer = (LayerBase)Activator.CreateInstance(Type.GetType(lbparams[0]), new object[] { true });
+            layer.Direction = (DirectionPattern)Enum.Parse(typeof(DirectionPattern), lbparams[1]);
+            #endregion
+
+            var variableparam = split[1];
+            var variable = (DedicatedFunction.Variable.VariableBase)Activator.CreateInstance(Type.GetType(lbparams[2]));
+            layer.Variable = variable.Decode(location, variableparam, batchcount).Confirm(instance);
+
+            return layer;
         }
 
         public LayerBase Clone()
         {
-            var clone = (LayerBase)Activator.CreateInstance(this.GetType());
+            var clone = (LayerBase)Activator.CreateInstance(this.GetType(), new object[] { false });
             clone.Direction = Direction;
-            clone.ForwardFunction = (Components.GPGPU.Function.FunctionBase)Activator.CreateInstance(ForwardFunction.GetType());
-            clone.BackFunction = (Components.GPGPU.Function.FunctionBase)Activator.CreateInstance(BackFunction.GetType());
             clone.Variable = Variable.Clone();
             return clone;
         }

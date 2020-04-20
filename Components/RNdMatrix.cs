@@ -29,7 +29,7 @@ namespace Components
 
             this.Data = new Real[this.Length];
         }
-        public RNdMatrix(RNdArray[][] array)
+        internal RNdMatrix(RNdArray[][] array)
         {
             this.Shape = new int[4];
             Shape[0] = array.Length;
@@ -118,42 +118,6 @@ namespace Components
         //}
         #endregion
 
-        #region PrivateMethod
-        //private Real[] MatToArray(Mat frame)
-        //{
-        //    int areaSize = frame.Width * frame.Height;
-        //    Real[] temporary = new Real[frame.Channels() * frame.Width * frame.Height];
-        //    int pos = 0;
-        //    Mat[] chs;
-        //    Cv2.Split(frame, out chs);
-        //    for (int i = 0; i < frame.Channels(); i++)
-        //    {
-        //        var bytearray = new byte[areaSize]; var realarray = new Real[areaSize];
-        //        Marshal.Copy(chs[i].Data, bytearray, 0, frame.Width * frame.Height);
-        //        realarray = bytearray.Select(x => (Real)((float)x * 1.0 / 255.0)).ToArray();
-        //        Array.Copy(realarray, 0, temporary, pos, areaSize);
-        //        pos += areaSize;
-        //    }
-        //    return temporary;
-        //}
-        //private Mat ArrayToMat(int batchindex)
-        //{
-        //    Mat frame = new Mat();
-        //    Mat[] chs = new Mat[Channels];
-        //    Real[] rla = new Real[AreaSize];
-        //    byte[] bta = new byte[AreaSize];
-        //    for (int i = 0; i < Channels; i++)
-        //    {
-        //        chs[i] = Mat.Zeros(new Size(Width, Height), MatType.CV_8UC1);
-        //        Array.Copy(Data, batchindex * Channels * AreaSize + i * AreaSize, rla, 0, AreaSize);
-        //        bta = rla.Select(x => (byte)(byte.MaxValue * (Math.Abs(x) > 1 ? 1 : Math.Abs(x)))).ToArray();
-        //        Marshal.Copy(bta, 0, chs[i].Data, AreaSize);
-        //    }
-        //    Cv2.Merge(chs, frame);
-        //    return frame;
-        //}
-        #endregion
-
         public Real this[int b, int c, int x, int y]
         {
             get { return Data[b * Channels * AreaSize + c * AreaSize + y * Width + x]; }
@@ -168,7 +132,9 @@ namespace Components
 
         public override RNdObject Clone()
         {
-            var matrix = new RNdMatrix() { Data = (Real[])Data.Clone(), Shape = (int[])Shape.Clone() };
+            var cl = new Real[Data.Length];
+            Array.Copy(Data, 0, cl, 0, Data.Length);
+            var matrix = new RNdMatrix() { Hash = this.Hash, Data = cl, Shape = (int[])Shape.Clone() };
             return matrix;
         }
 
@@ -185,12 +151,6 @@ namespace Components
                 Array.Copy(Data, 0, dist.Data, 0, Data.Length);
             }
         }
-
-        //public override void Show(string name, int batchindex = 0)
-        //{
-        //    Cv2.ImShow(name, ArrayToMat(batchindex));
-        //    Cv2.WaitKey(1);
-        //}
 
         public static RNdMatrix operator -(RNdMatrix o1, RNdMatrix o2)
         {

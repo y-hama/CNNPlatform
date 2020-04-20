@@ -46,7 +46,7 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
         #endregion
 
         private const double center = 0.5;
-        private const double eta1 = 0.01;
+        private const double eta1 = 0.001;
 
         public override double Update(ref Real[] _w, Real[] diff, double rho = 0)
         {

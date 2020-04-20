@@ -100,6 +100,7 @@
     <Compile Include="Imaging\Converter.cs" />
     <Compile Include="Imaging\FileLoader.cs" />
     <Compile Include="Imaging\View.cs" />
+    <Compile Include="Locker\FileConverter.cs" />
     <Compile Include="Locker\HashCreator.cs" />
     <Compile Include="Locker\ObjectLocker.cs" />
     <Compile Include="Locker\Process.cs" />

@@ -12,8 +12,11 @@ namespace CNNPlatform.Process
 {
     public abstract class ThreadBase
     {
+        public string ModelSaveFolder { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\model";
         private ModelParameter ModelParameter { get; set; } = null;
         internal Model.Model Model { get; set; } = null;
+
+        protected abstract int BatchCount { get; }
 
         protected Components.RNdMatrix Input { get { return Model.InputLayer.Variable.Input; } }
         protected Components.RNdMatrix Output { get { return Model.OutputLayer.Variable.Output; } }
@@ -52,6 +55,8 @@ namespace CNNPlatform.Process
                 Loader.Request.Set();
 
                 Process();
+
+                GC.Collect();
             }
         }
 
@@ -64,7 +69,12 @@ namespace CNNPlatform.Process
         {
             CNNPlatform.Model.Creater.Core.Instance = ModelParameter;
             // Model生成
-            Model = CNNPlatform.Model.Creater.Core.BasicImageCreater();
+            if ((Model = CNNPlatform.Model.Model.Load(ModelSaveFolder, BatchCount)) == null)
+            {
+                CNNPlatform.Model.Creater.Core.BatchCount = BatchCount;
+                Model = CNNPlatform.Model.Creater.Core.BasicImageCreater();
+            }
+            Console.WriteLine("BatchCount : {0}", BatchCount);
         }
 
         private void CreateInputLoader()
