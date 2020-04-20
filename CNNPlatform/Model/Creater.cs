@@ -16,25 +16,33 @@ namespace CNNPlatform.Model
 
         public ModelParameter Instance { get; set; } = null;
 
-        public Model TestModel()
+        public Model BasicImageCreater()
         {
-            var model = new CNNPlatform.Model.Model(Instance, 8, 3, 64, 64);
-            model.AddConvolution(6, 1, 1, Types.Optimizer.AdaSelf);
+            var model = new CNNPlatform.Model.Model(Instance, 4, 3, 64, 64);
+
+            model.AddConvolution(16, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
-            model.AddConvolution(12, 1, 1, Types.Optimizer.AdaSelf);
-            model.AddPooling(2, 1);
-            model.AddConvolution(24, 1, 1, Types.Optimizer.AdaSelf);
-            model.AddActivation(Types.Activator.Mish);
+            model.AddConvolution(32, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddConvolution(32, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
             model.AddConvolution(48, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
-            model.AddConvolution(96, 1, 1, Types.Optimizer.AdaSelf);
-            model.AddAffine(1000, Types.Optimizer.AdaSelf);
-            model.AddActivation(Types.Activator.ReLU);
-            model.AddAffine(300, Types.Optimizer.AdaSelf);
-            model.AddActivation(Types.Activator.ReLU);
+            model.AddConvolution(64, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddConvolution(64, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddAffine(512);
+            model.AddAffine(256);
 
             model.AddReverse();
+            return model;
+        }
+
+
+        public Model test()
+        {
+            var model = new CNNPlatform.Model.Model(Instance, 4, 3, 8, 8);
+
+            model.AddAffine(100);
+
             return model;
         }
     }

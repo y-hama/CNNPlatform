@@ -17,12 +17,18 @@ namespace CNNPlatform.DedicatedFunction.Variable
             }
         }
 
+        public string GetCaption
+        {
+            get
+            {
+                return string.Format("{0}", this.GetType().Name.Substring(0, 2));
+            }
+        }
 
         public int BatchCount { get; set; }
 
         public int InWidth { get; set; }
         public int InHeight { get; set; }
-
         public int InputChannels { get; set; }
 
         public int OutWidth { get; set; } = 0;
@@ -62,7 +68,36 @@ namespace CNNPlatform.DedicatedFunction.Variable
         public abstract void UpdateParameter(object parameter);
         public abstract void OverwriteParameter(ref object parameter);
 
-        public abstract string EncodeParameter();
+        protected abstract void EncodeParameterCore(ref string res);
+        public string EncodeParameter()
+        {
+            string res = string.Empty;
+            res += BatchCount.ToString() + " ";
+            res += InWidth.ToString() + " ";
+            res += InHeight.ToString() + " ";
+            res += InputChannels.ToString() + " ";
+            res += OutWidth.ToString() + " ";
+            res += OutHeight.ToString() + " ";
+            res += OutputChannels.ToString() + " ";
+            EncodeParameterCore(ref res);
+            return res;
+        }
         public abstract string EncodeOption();
+
+        public abstract void CoreClone(ref VariableBase _clone);
+
+        public VariableBase Clone()
+        {
+            var clone = (VariableBase)Activator.CreateInstance(this.GetType());
+            clone.BatchCount = BatchCount;
+            clone.InWidth = BatchCount;
+            clone.InHeight = BatchCount;
+            clone.InputChannels = BatchCount;
+            clone.OutWidth = BatchCount;
+            clone.OutHeight = BatchCount;
+            clone.OutputChannels = BatchCount;
+            CoreClone(ref clone);
+            return clone;
+        }
     }
 }

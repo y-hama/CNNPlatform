@@ -11,7 +11,6 @@ namespace CNNPlatform.DedicatedFunction.Variable
         public Utility.Types.Activator ActivationType { get; set; } = Utility.Types.Activator.ReLU;
 
 
-
         public override string GetStatus
         {
             get
@@ -44,23 +43,19 @@ namespace CNNPlatform.DedicatedFunction.Variable
         {
         }
 
-        public override string EncodeParameter()
+        protected override void EncodeParameterCore(ref string res)
         {
-            string res = string.Empty;
-            res += BatchCount.ToString() + " ";
-            res += InWidth.ToString() + " ";
-            res += InHeight.ToString() + " ";
-            res += InputChannels.ToString() + " ";
-            res += OutWidth.ToString() + " ";
-            res += OutHeight.ToString() + " ";
-            res += OutputChannels.ToString() + " ";
-            return res;
         }
 
         public override string EncodeOption()
         {
             string res = string.Empty;
             return res;
+        }
+
+        public override void CoreClone(ref VariableBase _clone)
+        {
+            (_clone as ActivationVariable).ActivationType = ActivationType;
         }
     }
 }

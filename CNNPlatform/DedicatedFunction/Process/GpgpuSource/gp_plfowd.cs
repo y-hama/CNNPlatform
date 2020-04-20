@@ -37,29 +37,27 @@ namespace CNNPlatform.DedicatedFunction.Process.GpgpuSource
             AddMethodBody(@"
                         int locy = (int)(i2 / (InWidth / CompressSize));
                         int locx = i2 - locy * (InWidth / CompressSize);
-                        double clr = -1;
+                        double clr = 0;
+                        double cnt = 0;
 
                         for (int ii = 0; ii < CompressSize; ii++)
                         {
                             for (int ij = 0; ij < CompressSize; ij++)
                             {
                                 int iidx = i0 * InArea + i1 * InSize + (locy * CompressSize + ij) * InWidth + (locx * CompressSize + ii);
-                                if (clr < Input[iidx])
-                                {
-                                    clr = Input[iidx];
-                                }
+                                clr += Input[iidx];
+                                cnt = cnt + 1;
                             }
                         }
+                        clr /= cnt;
+
+
                         for (int ii = 0; ii < CompressSize; ii++)
                         {
                             for (int ij = 0; ij < CompressSize; ij++)
                             {
                                 int iidx = i0 * InArea + i1 * InSize + (locy * CompressSize + ij) * InWidth + (locx * CompressSize + ii);
-                                if (clr == Input[iidx])
-                                {
-                                    Map[iidx] = 1;
-                                }
-                                else { Map[iidx] = 0; }
+                                Map[iidx] = 1;
                             }
                         }
 

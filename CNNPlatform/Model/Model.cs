@@ -24,6 +24,9 @@ namespace CNNPlatform.Model
             get { return Layer[idx]; }
         }
 
+        internal LayerBase InputLayer { get { return Layer[0]; } }
+        internal LayerBase OutputLayer { get { return Layer[LayerCount - 1]; } }
+
         public int LayerCount { get { return Layer.Count; } }
 
         private ModelParameter Instance { get; set; }
@@ -46,9 +49,14 @@ namespace CNNPlatform.Model
         {
             string text = "!>" + Generation + " " + Error + "\n";
             text += this.GetType().ToString() + "\n";
-            foreach (var item in Layer)
+            string[] tmp = new string[LayerCount];
+            Components.GPGPU.Parallel.For(0, LayerCount, i =>
             {
-                text += item.Encode();
+                tmp[i] = Layer[i].Encode();
+            });
+            foreach (var item in tmp)
+            {
+                text += item;
             }
             using (var fs = new System.IO.StreamWriter(filename, false))
             {
@@ -56,10 +64,18 @@ namespace CNNPlatform.Model
             }
         }
 
-        private void AddLayer(Layer.LayerBase layer)
+        public Model Clone()
         {
-            Layer.Add(layer);
-            Console.WriteLine(string.Format("Layer({0,2}) : {1} -> {2}", LayerCount, layer.GetType().Name, layer.ParameterStatus));
+            var model = new Model(null, BatchCount, InputChannels, InputWidth, InputHeight)
+            {
+                Generation = Generation,
+                Epoch = Epoch,
+            };
+            for (int i = 0; i < LayerCount; i++)
+            {
+                model.Layer.Add(Layer[i].Clone());
+            }
+            return model;
         }
 
         private void GetLayerInputInfomation(out int inw, out int inh, out int inch)
@@ -73,6 +89,12 @@ namespace CNNPlatform.Model
             }
         }
 
+        private void AddLayer(Layer.LayerBase layer)
+        {
+            Layer.Add(layer);
+            Console.WriteLine(string.Format("Layer({0,2}) : {1} -> {2}", LayerCount, layer.GetType().Name, layer.ParameterStatus));
+        }
+
         #region CreateReverseLayer(private)
         private Layer.LayerBase ReverseConvolution(VariableBase _variable)
         {
@@ -80,6 +102,7 @@ namespace CNNPlatform.Model
 
             return new Layer.Convolution()
             {
+                Direction = LayerBase.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.ConvolutionVariable()
                 {
                     BatchCount = BatchCount,
@@ -104,6 +127,7 @@ namespace CNNPlatform.Model
 
             return new Layer.Pooling()
             {
+                Direction = LayerBase.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.PoolingVariable()
                 {
                     BatchCount = BatchCount,
@@ -123,6 +147,7 @@ namespace CNNPlatform.Model
 
             return new Layer.Activation()
             {
+                Direction = LayerBase.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.ActivationVariable()
                 {
                     BatchCount = BatchCount,
@@ -141,6 +166,7 @@ namespace CNNPlatform.Model
 
             return new Layer.Affine()
             {
+                Direction = LayerBase.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.AffineVariable()
                 {
                     BatchCount = BatchCount,
@@ -163,19 +189,6 @@ namespace CNNPlatform.Model
         public void AddReverse()
         {
             var list = new List<Layer.LayerBase>();
-            //if (Layer[LayerCount - 1] is Layer.Convolution)
-            //{
-            //    list.Add(ReverseConvolution(Layer[LayerCount - 1].Variable));
-            //}
-            //else if (Layer[LayerCount - 1] is Layer.Pooling)
-            //{
-            //    list.Add(ReversePooling(Layer[LayerCount - 1].Variable));
-            //}
-            //else if (Layer[LayerCount - 1] is Layer.Affine)
-            //{
-            //    list.Add(ReverseAffine(Layer[LayerCount - 1].Variable));
-            //}
-
             for (int i = LayerCount - 1; i >= 0; i--)
             {
                 var type = Layer[i].GetType();
@@ -211,6 +224,7 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Convolution()
             {
+                Direction = LayerBase.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.ConvolutionVariable()
                 {
                     BatchCount = BatchCount,
@@ -236,6 +250,7 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Pooling()
             {
+                Direction = LayerBase.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.PoolingVariable()
                 {
                     BatchCount = BatchCount,
@@ -256,6 +271,7 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Activation()
             {
+                Direction = LayerBase.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.ActivationVariable()
                 {
                     BatchCount = BatchCount,
@@ -275,6 +291,7 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Affine()
             {
+                Direction = LayerBase.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.AffineVariable()
                 {
                     BatchCount = BatchCount,
@@ -335,7 +352,7 @@ namespace CNNPlatform.Model
             var viweset = new Components.RNdMatrix[]
             {
                 Layer[0].Variable.Input,
-                Teacher,
+                Teacher.AreaSize == 0 ? new Components.RNdMatrix(OutputLayer.Variable.Output.Shape) : Teacher,
                 (Components.RNdMatrix)Layer[LayerCount - 1].Variable.Sigma.Abs(),
                 Layer[LayerCount - 1].Variable.Output,
             };
@@ -345,11 +362,13 @@ namespace CNNPlatform.Model
         public Components.RNdMatrix ShowProcess(double scale = 1)
         {
             List<Components.RNdMatrix> source = new List<Components.RNdMatrix>();
+            List<string> caption = new List<string>();
             for (int i = 0; i < LayerCount; i++)
             {
+                caption.Add(Layer[i].Variable.GetCaption);
                 source.Add(Layer[i].Variable.Output.Clone() as Components.RNdMatrix);
             }
-            return Components.Imaging.View.ConvertToProcessImage(source, scale);
+            return Components.Imaging.View.ConvertToProcessImage(caption, source, scale);
         }
         #endregion
     }

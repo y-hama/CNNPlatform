@@ -16,13 +16,13 @@ namespace CNNPlatform.DedicatedFunction.Variable
         public int KernelExpand { get; set; } = 1;
 
         public Utility.Types.Optimizer OptimizerType { get; set; } = Utility.Types.Optimizer.Adam;
+        public double Rho { get; set; } = 0.0001;
 
         public Components.RNdMatrix WeightBias;
         public Components.RNdMatrix WeightKernel;
 
         public Components.Real[] WeightDifference;
 
-        public double Rho { get; set; } = 0.0001;
 
         public override string GetStatus
         {
@@ -47,8 +47,8 @@ namespace CNNPlatform.DedicatedFunction.Variable
                 var w = new Utility.Shared.ModelParameter.WeightData(2);
                 w.Data[0] = new Components.RNdMatrix(OutputChannels, 1, 1, 1);
                 w.Data[1] = new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1);
-                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0, 1.0 / (InputChannels));
-                Utility.Randomizer.Noize(ref w.Data[1].Data, Utility.Randomizer.Sign.Both, 0, 1.0 / (InputChannels * KernelLength));
+                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InputChannels)));
+                Utility.Randomizer.Noize(ref w.Data[1].Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InputChannels * KernelLength)));
                 obj.Weignt.Add(w);
 
                 WeightBias = new Components.RNdMatrix(w.Data[0].Shape);
@@ -61,65 +61,74 @@ namespace CNNPlatform.DedicatedFunction.Variable
             {
                 WeightBias = (new Components.RNdMatrix(OutputChannels, 1, 1, 1)) as Components.RNdMatrix;
                 WeightKernel = (new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1)) as Components.RNdMatrix;
+                Utility.Randomizer.Noize(ref WeightBias.Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InputChannels)));
+                Utility.Randomizer.Noize(ref WeightKernel.Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InputChannels * KernelLength)));
+                WeightDifference = new Components.Real[2];
             }
         }
 
         public override void UpdateParameter(object parameter)
         {
-            var weight = parameter as Utility.Shared.ModelParameter.WeightData;
+            if (parameter != null)
+            {
+                var weight = parameter as Utility.Shared.ModelParameter.WeightData;
 
-            WeightBias.Data = weight.Data[0].Data.Clone() as Components.Real[];
-            WeightKernel.Data = weight.Data[1].Data.Clone() as Components.Real[];
-            WeightDifference = weight.Difference.Clone() as Components.Real[];
+                WeightBias.Data = weight.Data[0].Data.Clone() as Components.Real[];
+                WeightKernel.Data = weight.Data[1].Data.Clone() as Components.Real[];
+                WeightDifference = weight.Difference.Clone() as Components.Real[];
+            }
         }
 
         public override void OverwriteParameter(ref object parameter)
         {
-            var weight = parameter as Utility.Shared.ModelParameter.WeightData;
+            if (parameter != null)
+            {
+                var weight = parameter as Utility.Shared.ModelParameter.WeightData;
 
-            weight.Data[0].Data = WeightBias.Data.Clone() as Components.Real[];
-            weight.Data[1].Data = WeightKernel.Data.Clone() as Components.Real[];
-            weight.Difference = WeightDifference.Clone() as Components.Real[];
+                weight.Data[0].Data = WeightBias.Data.Clone() as Components.Real[];
+                weight.Data[1].Data = WeightKernel.Data.Clone() as Components.Real[];
+                weight.Difference = WeightDifference.Clone() as Components.Real[];
+            }
         }
 
-        public override string EncodeParameter()
+        protected override void EncodeParameterCore(ref string res)
         {
-            string res = string.Empty;
-            res += BatchCount.ToString() + " ";
-            res += InWidth.ToString() + " ";
-            res += InHeight.ToString() + " ";
-            res += InputChannels.ToString() + " ";
-            res += OutWidth.ToString() + " ";
-            res += OutHeight.ToString() + " ";
-            res += OutputChannels.ToString() + " ";
-
             res += OutScale.ToString() + " ";
             res += KernelSize.ToString() + " ";
             res += KernelExpand.ToString() + " ";
             res += OptimizerType.ToString() + " ";
             res += Rho.ToString() + " ";
-
-            return res;
         }
 
         public override string EncodeOption()
         {
+            var str_b = WeightBias.Data.Select(x => x.ToString() + ",").ToArray();
             var strw = "{" + WeightBias.BatchSize + "," + WeightBias.Channels + "," + WeightBias.Width + "," + WeightBias.Height + "}(";
             for (int i = 0; i < WeightBias.Length; i++)
             {
-                if (i != 0) { strw += ","; }
-                strw += WeightBias.Data[i].ToString();
+                strw += str_b[i];
             }
             strw += ")";
 
+            var str_k = WeightKernel.Data.Select(x => x.ToString() + ",").ToArray();
             var strk = "{" + WeightKernel.BatchSize + "," + WeightKernel.Channels + "," + WeightKernel.Width + "," + WeightKernel.Height + "}(";
             for (int i = 0; i < WeightKernel.Length; i++)
             {
-                if (i != 0) { strk += ","; }
-                strk += WeightKernel.Data[i].ToString();
+                strk += str_k[i];
             }
             strk += ")";
             return strw + "\n" + strk;
+        }
+
+        public override void CoreClone(ref VariableBase _clone)
+        {
+            (_clone as ConvolutionVariable).OutScale = OutScale;
+            (_clone as ConvolutionVariable).KernelSize = KernelSize;
+            (_clone as ConvolutionVariable).KernelExpand = KernelExpand;
+            (_clone as ConvolutionVariable).OptimizerType = OptimizerType;
+            (_clone as ConvolutionVariable).Rho = Rho;
+            (_clone as ConvolutionVariable).WeightBias = WeightBias.Clone() as Components.RNdMatrix; ;
+            (_clone as ConvolutionVariable).WeightKernel = WeightKernel.Clone() as Components.RNdMatrix; ;
         }
     }
 }

@@ -83,17 +83,19 @@ namespace Components.Imaging
             return mat;
         }
 
-        public static RNdMatrix ConvertToProcessImage(List<Components.RNdMatrix> source, double scale = 1)
+        public static RNdMatrix ConvertToProcessImage(List<string> caption, List<Components.RNdMatrix> source, double scale = 1)
         {
-            int arraywidth = 10;
-            int w = 0, h = 0;
+            int arraywidth = 20;
+            int w = 0, h = 0, hmax = int.MinValue;
             foreach (var item in source)
             {
                 w += item.Width == 1 ? arraywidth : (int)(scale * item.Width);
                 if (item.Width > 1 && item.Height * item.Channels > h)
                 { h = (int)(scale * item.Height * item.Channels); }
+                if (hmax < item.Height) { hmax = item.Height; }
             }
-            Mat frame = new Mat(new Size(w, h), MatType.CV_8UC3, new Scalar(16, 16, 16));
+            if (h == 0) { h = hmax; }
+            Mat frame = new Mat(new Size(w, 32 + h), MatType.CV_8UC3, new Scalar(16, 16, 16));
 
             int arrayheight = 0;
             foreach (var item in source)
@@ -109,26 +111,32 @@ namespace Components.Imaging
             double arrayscale = (double)h / arrayheight;
 
             int startw = 0, wt = 0, ht = 0;
+            Mat[] tmps = new Mat[source.Count];
+            Parallel.For(0, source.Count, i =>
+            {
+                var item = source[i];
+                Converter.RNdMatrixToVMat(item, out tmps[i]);
+            });
             for (int i = 0; i < source.Count; i++)
             {
                 var item = source[i];
                 wt = (item.Width == 1 ? arraywidth : (int)(scale * item.Width));
-                Mat tmp;
-                Converter.RNdMatrixToVMat(item, out tmp);
+                var tmp = tmps[i];
                 if (scale != 1)
                 {
-                    Cv2.Resize(tmp, tmp, new Size(), scale, scale, InterpolationFlags.Area);
+                    Cv2.Resize(tmp, tmp, new Size(tmp.Width == 1 ? 1 : tmp.Width * scale, tmp.Height * scale), 0, 0, InterpolationFlags.Area);
                 }
                 if (tmp.Width != wt)
                 {
                     Cv2.Resize(tmp, tmp, new Size(wt, tmp.Height * arrayscale), 0, 0, InterpolationFlags.Area);
                 }
                 ht = 0;
-                if (tmp.Height < frame.Height)
+                if (tmp.Height < h)
                 {
-                    ht = (frame.Height - tmp.Height) / 2;
+                    ht = (h - tmp.Height) / 2;
                 }
                 frame[new Rect(new Point(startw, ht), tmp.Size())] = tmp;
+                Cv2.PutText(frame, caption[i], new Point(startw, h + 12 * (((i % 2) + 1))), HersheyFonts.HersheyComplex, 0.25, new Scalar(255, 255, 255));
                 startw += tmp.Width;
             }
 

@@ -51,26 +51,22 @@ namespace CNNPlatform.DedicatedFunction.Variable
         {
         }
 
-        public override string EncodeParameter()
+        protected override void EncodeParameterCore(ref string res)
         {
-            string res = string.Empty;
-            res += BatchCount.ToString() + " ";
-            res += InWidth.ToString() + " ";
-            res += InHeight.ToString() + " ";
-            res += InputChannels.ToString() + " ";
-            res += OutWidth.ToString() + " ";
-            res += OutHeight.ToString() + " ";
-            res += OutputChannels.ToString() + " ";
-
             res += CompressSize.ToString() + " ";
             res += ExpandSize.ToString() + " ";
-            return res;
         }
 
         public override string EncodeOption()
         {
             string res = string.Empty;
             return res;
+        }
+
+        public override void CoreClone(ref VariableBase _clone)
+        {
+            (_clone as PoolingVariable).CompressSize = CompressSize;
+            (_clone as PoolingVariable).ExpandSize = ExpandSize;
         }
     }
 }

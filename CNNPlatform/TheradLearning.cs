@@ -57,7 +57,7 @@ namespace CNNPlatform
 
             // Model生成
             Model.Creater.Core.Instance = instance;
-            var model = Model.Creater.Core.TestModel();
+            var model = Model.Creater.Core.BasicImageCreater();
             var inputvariavble = model[0].Variable as DedicatedFunction.Variable.VariableBase;
             var outputvariavble = model[model.LayerCount - 1].Variable as DedicatedFunction.Variable.VariableBase;
             using (instance.Lock(Components.Locker.Priority.Critical))
@@ -121,8 +121,9 @@ namespace CNNPlatform
                     ImageData.Instance.LoadSignal.Reset();
                     ImageData.Instance.ResetSignal.Reset();
                     iteration = Components.Imaging.FileLoader.Instance.LoadImage(
-                        inputvariavble.InWidth, inputvariavble.InHeight, outputvariavble.OutWidth, outputvariavble.OutHeight, inputvariavble.BatchCount,
-                        inputvariavble.InputChannels, outputvariavble.OutputChannels, out i, out t);
+                        inputvariavble.BatchCount, inputvariavble.InputChannels, inputvariavble.InWidth, inputvariavble.InHeight,
+                        outputvariavble.OutputChannels, outputvariavble.OutWidth, outputvariavble.OutHeight,
+                        out i, out t);
                     ImageData.Instance.Input = i;
                     ImageData.Instance.Teacher = t;
                     ImageData.Instance.LoadSignal.Signal();
@@ -146,7 +147,7 @@ namespace CNNPlatform
 
                 model.Learning(input, teacher, iteration);
                 result = model.ShowResult(640, 480);
-                process = model.ShowProcess();
+                process = model.ShowProcess(1);
 
                 #region Overwrite Signal
                 if (BufferingData.Instance.Signal.CurrentCount == BufferingData.Instance.Signal.InitialCount)

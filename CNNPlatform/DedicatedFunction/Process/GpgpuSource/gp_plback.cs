@@ -45,8 +45,7 @@ namespace CNNPlatform.DedicatedFunction.Process.GpgpuSource
                             for (int ij = 0; ij < ExpandSize; ij++)
                             {
                                 int oidx = i0 * OutArea + i1 * OutSize + (locy * ExpandSize + ij) * OutWidth + (locx * ExpandSize + ii);
-                                clr += Sigma[oidx];
-                                cnt = cnt + 1;
+                                clr += Sigma[oidx]; cnt = cnt + 1;
                             }
                         }
                         clr /= cnt;

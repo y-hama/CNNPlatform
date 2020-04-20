@@ -179,7 +179,7 @@ namespace Components.Imaging
             return Index.Dequeue().Images;
         }
 
-        public bool LoadImage(int inw, int inh, int outw, int outh, int batchcount, int inchannels, int outchannels, out RNdMatrix smat, out RNdMatrix tmat)
+        public bool LoadImage(int batchcount, int inchannels, int inw, int inh, int outchannels, int outw, int outh, out RNdMatrix smat, out RNdMatrix tmat)
         {
             bool ret = false;
             smat = tmat = null;
@@ -200,13 +200,18 @@ namespace Components.Imaging
                 int oflux, ofluy;
                 int ofrdx, ofrdy;
                 double scl = 2.5;
-                oflux = State.RandomSource.Next((int)(outw / (scl)) - 1);
-                ofluy = State.RandomSource.Next((int)(outw / (scl)) - 1);
-                ofrdx = State.RandomSource.Next((int)(outw / (scl)) - 1);
-                ofrdy = State.RandomSource.Next((int)(outw / (scl)) - 1);
-                Point lu, rd;
-                lu = new Point(oflux, ofluy);
-                rd = new Point(ofrdx, ofrdy);
+                double rotangle = 0;
+                Point lu = new Point(), rd = new Point();
+                if (inw > 1 && outw > 1 && inh > 1 && outh > 1)
+                {
+                    oflux = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
+                    ofluy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
+                    ofrdx = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
+                    ofrdy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
+                    lu = new Point(oflux, ofluy);
+                    rd = new Point(ofrdx, ofrdy);
+                    rotangle = (State.RandomSource.NextDouble() * 2 - 1) * 90;
+                }
 
                 var sframe = mat1.Clone();
                 if (inchannels != sframe.Channels())
@@ -216,7 +221,7 @@ namespace Components.Imaging
                     else { throw new Exception(); }
                 }
                 sframe = sframe.Resize(new Size(inw, inh), 0, 0, InterpolationFlags.Area);
-                sframe = Offset(sframe, lu, rd, flipx, flipy);
+                sframe = Offset(sframe, lu, rd, flipx, flipy, rotangle);
                 sframes.Add(sframe.Clone());
 
                 var tframe = mat2.Clone();
@@ -227,7 +232,7 @@ namespace Components.Imaging
                     else { throw new Exception(); }
                 }
                 tframe = Effect(tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area));
-                tframe = Offset(tframe, lu, rd, flipx, flipy);
+                tframe = Offset(tframe, lu, rd, flipx, flipy, rotangle);
                 tframes.Add(tframe.Clone());
             }
 
@@ -250,26 +255,38 @@ namespace Components.Imaging
             return frame;
         }
 
-        private Mat Offset(Mat source, Point leftup, Point rightdown, bool flipx, bool flipy)
+        private Mat Offset(Mat source, Point leftup, Point rightdown, bool flipx, bool flipy, double rotangle)
         {
-            Mat frame = source.Clone();
-            if (flipx && flipy)
+            if (source.Width <= 1 || source.Height <= 1)
             {
-                frame = frame.Flip(FlipMode.XY);
+                return source;
             }
             else
             {
-                if (flipx)
+                Mat frame = source.Clone();
+                if (flipx && flipy)
                 {
-                    frame = frame.Flip(FlipMode.X);
+                    frame = frame.Flip(FlipMode.XY);
                 }
-                if (flipy)
+                else
                 {
-                    frame = frame.Flip(FlipMode.Y);
+                    if (flipx)
+                    {
+                        frame = frame.Flip(FlipMode.X);
+                    }
+                    if (flipy)
+                    {
+                        frame = frame.Flip(FlipMode.Y);
+                    }
                 }
+
+                var center = new Point2f(source.Width / 2, source.Height / 2);
+                Mat rMat = Cv2.GetRotationMatrix2D(center, rotangle, 1);
+                Cv2.WarpAffine(frame, frame, rMat, new Size(source.Rows, source.Cols));
+
+                frame = frame.Clone()[new Rect(leftup, new Size(source.Width - (leftup.X + rightdown.X), source.Height - (leftup.Y + rightdown.Y)))];
+                return frame.Resize(source.Size());
             }
-            frame = frame.Clone()[new Rect(leftup, new Size(source.Width - (leftup.X + rightdown.X), source.Height - (leftup.Y + rightdown.Y)))];
-            return frame.Resize(source.Size());
         }
     }
 }

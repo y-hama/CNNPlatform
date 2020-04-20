@@ -64,18 +64,19 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
                 Initialized = true;
             }
             double delta = 0;
-            double t = Math.Pow(1 - 1.0 / Math.Sqrt(Iteration), 1);
             double max = diff.Max(x => Math.Abs(x));
-            s1 = Math.Pow(10, -(Math.Ceiling(Math.Log10(max <= eps ? eps_h : max))));
+            double sign = max > 1 ? -1 : 1;
+            s1 = Math.Pow(10, sign * (Math.Ceiling(Math.Log10(max <= eps ? eps : max))));
             Components.GPGPU.Parallel.For(0, w.Length, i =>
             {
                 var dw_a = dw_Adam(i, diff[i]);
                 var dw_s = dw_SGD(i, diff[i], max);
+
                 var vvd = diff[i] - pd[i];
                 var aad = vvd - vd[i];
 
-                var rt = Math.Abs(diff[i] / (vvd + eps));
-                var np = 1.0 / (1 + Math.Exp(-Math.PI * (rt - center)));
+                var rt = Math.Abs(vvd / (aad + eps));
+                var np = 1.0 / (1 + Math.Exp(-(rt - center) / Math.PI));
                 var dw = (np * dw_a + (1 - np) * dw_s);
 
                 delta += dw;
