@@ -482,7 +482,7 @@ namespace CNNPlatform.Model
             InputLayer.Variable.Input = input;
             Teacher = teacher;
             #region LearningProcess
-            for (int i = 0; i < LayerCount; i++)
+            for (int i = InputLayerIndex; i < LayerCount; i++)
             {
                 this[i].ForwardFunction.Do(this[i].Variable);
                 if (i < this.LayerCount - 1)
@@ -491,7 +491,7 @@ namespace CNNPlatform.Model
                 }
             }
             OutputLayer.Variable.Sigma = OutputLayer.Variable.Output - teacher;
-            for (int i = this.LayerCount - 1; i >= 0; i--)
+            for (int i = this.LayerCount - 1; i >= InputLayerIndex; i--)
             {
                 this[i].BackFunction.Do(this[i].Variable);
                 if (i > 0)
@@ -507,7 +507,7 @@ namespace CNNPlatform.Model
         public void Inference(Components.RNdMatrix input, out Components.RNdMatrix output)
         {
             InputLayer.Variable.Input = input;
-            for (int i = 0; i < LayerCount; i++)
+            for (int i = InputLayerIndex; i < LayerCount; i++)
             {
                 this[i].ForwardFunction.Do(this[i].Variable);
                 if (i < this.LayerCount - 1)

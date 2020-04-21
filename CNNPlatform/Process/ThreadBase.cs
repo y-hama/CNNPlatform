@@ -17,7 +17,7 @@ namespace CNNPlatform.Process
         internal Model.Model Model { get; set; } = null;
 
         protected abstract int BatchCount { get; }
-        protected virtual Utility.Types.DirectionPattern Direction { get; set; } = Utility.Types.DirectionPattern.Through;
+        protected virtual Utility.Types.DirectionPattern Direction { get; set; } = Utility.Types.DirectionPattern.TurnBack;
 
         #region Buffer
         protected Components.RNdMatrix Input { get { return Model.InputLayer.Variable.Input; } }
