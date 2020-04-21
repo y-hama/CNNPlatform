@@ -132,68 +132,78 @@ namespace Components.Imaging
             writer.Release();
         }
 
-        public void GetFrame(int width, int height, int batchcount, int channels, out RNdMatrix mat)
+        public bool LoadCapture(int batchcount, int inchannels, int inw, int inh, int outchannels, int outw, int outh, bool doFlip, bool doRot, bool doAffine, out RNdMatrix smat, out RNdMatrix tmat)
         {
-            mat = null;
-            Mat frame = new Mat();
-            if (!capture.Read(frame)) { throw new Exception(); }
-            frame = frame.Resize(new Size(width, height));
-            if (channels != frame.Channels())
-            {
-                if (channels == 1) { Cv2.CvtColor(frame, frame, ColorConversionCodes.BGR2GRAY); }
-                else if (channels == 3) { Cv2.CvtColor(frame, frame, ColorConversionCodes.GRAY2BGR); }
-                else { throw new Exception(); }
-            }
-            List<Mat> frames = new List<Mat>();
+            bool ret = true;
+
+            List<Mat> sframes = new List<Mat>();
+            List<Mat> tframes = new List<Mat>();
+
             for (int i = 0; i < batchcount; i++)
             {
-                frames.Add(frame.Clone());
+                Mat mat = new Mat(), mat1, mat2;
+                while (!capture.Read(mat)) { }
+                mat1 = mat.Clone();
+                mat2 = mat.Clone();
+
+                bool flipx = false;
+                bool flipy = false;
+                int oflux = 0, ofluy = 0;
+                int ofrdx = 0, ofrdy = 0;
+                double scl = 2.5;
+                double rotangle = 0;
+                Point lu = new Point(), rd = new Point();
+
+                if (doFlip)
+                {
+                    flipx = (State.RandomSource.NextDouble() > 0.5 ? true : false);
+                    flipy = (State.RandomSource.NextDouble() > 0.5 ? true : false);
+                }
+                if (doRot)
+                {
+                    rotangle = (State.RandomSource.NextDouble() * 2 - 1) * 90;
+                }
+                if (doAffine)
+                {
+                    if (inw > 1 && outw > 1 && inh > 1 && outh > 1)
+                    {
+                        oflux = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
+                        ofluy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
+                        ofrdx = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
+                        ofrdy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
+                    }
+                }
+
+                lu = new Point(oflux, ofluy);
+                rd = new Point(ofrdx, ofrdy);
+
+                var sframe = mat1.Clone();
+                if (inchannels != sframe.Channels())
+                {
+                    if (inchannels == 1) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.BGR2GRAY); }
+                    else if (inchannels == 3) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.GRAY2BGR); }
+                    else { throw new Exception(); }
+                }
+                sframe = sframe.Resize(new Size(inw, inh), 0, 0, InterpolationFlags.Area);
+                sframe = EffectProcess.Offset(sframe, lu, rd, flipx, flipy, rotangle);
+                sframes.Add(sframe.Clone());
+
+                var tframe = mat2.Clone();
+                if (outchannels != tframe.Channels())
+                {
+                    if (outchannels == 1) { Cv2.CvtColor(tframe, tframe, ColorConversionCodes.BGR2GRAY); }
+                    else if (outchannels == 3) { Cv2.CvtColor(tframe, tframe, ColorConversionCodes.GRAY2BGR); }
+                    else { throw new Exception(); }
+                }
+                tframe = EffectProcess.Effect(tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area));
+                tframe = EffectProcess.Offset(tframe, lu, rd, flipx, flipy, rotangle);
+                tframes.Add(tframe.Clone());
             }
-            Converter.MatToRNdMatrix(frames.ToArray(), out mat);
+
+            Converter.MatToRNdMatrix(sframes.ToArray(), out smat);
+            Converter.MatToRNdMatrix(tframes.ToArray(), out tmat);
+            return ret;
         }
-
-
-        public void GetFrameSet(int width, int height, double scale, int batchcount, int inchannels, int outchannels, out RNdMatrix smat, out RNdMatrix tmat)
-        {
-            smat = tmat = null;
-            Mat sframe = new Mat();
-            Mat tframe;
-            if (capture.Read(sframe))
-            {
-                tframe = sframe.Clone();
-            }
-            else { throw new Exception(); }
-
-            sframe = sframe.Resize(new Size(width, height));
-            tframe = tframe.Resize(new Size(scale * width, scale * height));
-            List<Mat> frames = new List<Mat>();
-            if (inchannels != sframe.Channels())
-            {
-                if (inchannels == 1) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.BGR2GRAY); }
-                else if (inchannels == 3) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.GRAY2BGR); }
-                else { throw new Exception(); }
-            }
-            frames.Clear();
-            for (int i = 0; i < batchcount; i++)
-            {
-                frames.Add(sframe.Clone());
-            }
-            Converter.MatToRNdMatrix(frames.ToArray(), out smat);
-
-            if (outchannels != tframe.Channels())
-            {
-                if (outchannels == 1) { Cv2.CvtColor(tframe, tframe, ColorConversionCodes.BGR2GRAY); }
-                else if (outchannels == 3) { Cv2.CvtColor(tframe, tframe, ColorConversionCodes.GRAY2BGR); }
-                else { throw new Exception(); }
-            }
-            frames.Clear();
-            for (int i = 0; i < batchcount; i++)
-            {
-                frames.Add(tframe.Clone());
-            }
-            Converter.MatToRNdMatrix(frames.ToArray(), out tmat);
-        }
-
 
         public void GetDiffFrame(int width, int height, out double[] buf)
         {

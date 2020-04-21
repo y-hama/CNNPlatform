@@ -29,12 +29,13 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         protected override void ConfirmField(object shared)
         {
+            double sd = Math.Sqrt(1.0 / (InArea));
             if (shared != null)
             {
                 var obj = shared as Utility.Shared.ModelParameter;
                 var w = new Utility.Shared.ModelParameter.WeightData(1);
                 w.Data[0] = new Components.RNdMatrix(InArea + 1, OutArea, 1, 1);
-                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InArea)));
+                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0, sd);
                 obj.Weignt.Add(w);
 
                 Weight = new Components.RNdMatrix(w.Data[0].Shape);
@@ -46,7 +47,7 @@ namespace CNNPlatform.DedicatedFunction.Variable
                 if (!ObjectDecoded)
                 {
                     Weight = (new Components.RNdMatrix(InArea + 1, OutArea, 1, 1)) as Components.RNdMatrix;
-                    Utility.Randomizer.Noize(ref Weight.Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InArea)));
+                    Utility.Randomizer.Noize(ref Weight.Data, Utility.Randomizer.Sign.Both, 0, sd);
                 }
                 WeightDifference = new Components.Real[1];
             }

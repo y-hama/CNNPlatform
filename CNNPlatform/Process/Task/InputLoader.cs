@@ -33,6 +33,10 @@ namespace CNNPlatform.Process.Task
 
         public bool EpochIteration { get; private set; }
 
+        public bool Flip { get; set; } = true;
+        public bool Rotation { get; set; } = true;
+        public bool Offset { get; set; } = true;
+
         public void Start()
         {
             #region Configuration
@@ -77,6 +81,7 @@ namespace CNNPlatform.Process.Task
                         LoadImage();
                         break;
                     case Source.Camera:
+                        LoadCapture();
                         break;
                     default:
                         break;
@@ -92,6 +97,18 @@ namespace CNNPlatform.Process.Task
             EpochIteration = Components.Imaging.FileLoader.Instance.LoadImage(
                 InputShape[0], InputShape[1], InputShape[2], InputShape[3],
                 TeacherShape[1], TeacherShape[2], TeacherShape[3],
+                Flip, Rotation, Offset,
+                out input, out teacher);
+            Input = input; Teacher = teacher;
+        }
+
+        private void LoadCapture()
+        {
+            Components.RNdMatrix input, teacher;
+            Components.Imaging.Camera.Instance.LoadCapture(
+                InputShape[0], InputShape[1], InputShape[2], InputShape[3],
+                TeacherShape[1], TeacherShape[2], TeacherShape[3],
+                Flip, Rotation, Offset,
                 out input, out teacher);
             Input = input; Teacher = teacher;
         }

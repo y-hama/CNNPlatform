@@ -185,16 +185,17 @@ namespace CNNPlatform.DedicatedFunction.Process
             }
         }
 
-        protected override bool UpdateConditionCheck()
+        protected override bool UpdateConditionCheck(ref bool doUpdateCalculation)
         {
+            doUpdateCalculation = (Variable as DedicatedFunction.Variable.VariableBase).UpdateRequest;
             return true;
         }
 
-        public override void Update()
+        public override void Update(bool doUpdateCalculation)
         {
             (Variable as DedicatedFunction.Variable.VariableBase).CalcurationError(ref Error);
             double ep = ((double)1.0 / (InputChannels * OutputChannels));
-            Difference[0] = WeightOptimizer.Update(ref Weight, dWeight, ep * Rho);
+            Difference[0] = WeightOptimizer.Update(ref Weight, dWeight, doUpdateCalculation, ep * Rho);
         }
     }
 }

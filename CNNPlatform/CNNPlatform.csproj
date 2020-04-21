@@ -63,7 +63,6 @@
     <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_plfowd.cs" />
     <Compile Include="DedicatedFunction\Process\Optimizer\Adam.cs" />
     <Compile Include="DedicatedFunction\Process\Optimizer\AdaSelf.cs" />
-    <Compile Include="DedicatedFunction\Process\Optimizer\AMSGrad.cs" />
     <Compile Include="DedicatedFunction\Process\Optimizer\OptimizerBase.cs" />
     <Compile Include="DedicatedFunction\Process\PoolingBack.cs" />
     <Compile Include="DedicatedFunction\Process\PoolingForward.cs" />
@@ -88,7 +87,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utility\Shared\ModelParameter.cs" />
-    <Compile Include="TheradLearning.cs" />
     <Compile Include="Utility\Randomizer.cs" />
     <Compile Include="Utility\Shared\ProcessParameter.cs" />
     <Compile Include="Utility\Types.cs" />

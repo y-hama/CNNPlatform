@@ -179,7 +179,7 @@ namespace Components.Imaging
             return Index.Dequeue().Images;
         }
 
-        public bool LoadImage(int batchcount, int inchannels, int inw, int inh, int outchannels, int outw, int outh, out RNdMatrix smat, out RNdMatrix tmat)
+        public bool LoadImage(int batchcount, int inchannels, int inw, int inh, int outchannels, int outw, int outh, bool doFlip, bool doRot, bool doAffine, out RNdMatrix smat, out RNdMatrix tmat)
         {
             bool ret = false;
             smat = tmat = null;
@@ -195,23 +195,36 @@ namespace Components.Imaging
                 var mat1 = (index[0].Container);
                 var mat2 = (index[1].Container);
 
-                bool flipx = (State.RandomSource.NextDouble() > 0.5 ? true : false);
-                bool flipy = (State.RandomSource.NextDouble() > 0.5 ? true : false);
-                int oflux, ofluy;
-                int ofrdx, ofrdy;
+                bool flipx = false;
+                bool flipy = false;
+                int oflux = 0, ofluy = 0;
+                int ofrdx = 0, ofrdy = 0;
                 double scl = 2.5;
                 double rotangle = 0;
                 Point lu = new Point(), rd = new Point();
-                if (inw > 1 && outw > 1 && inh > 1 && outh > 1)
+
+                if (doFlip)
                 {
-                    oflux = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
-                    ofluy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
-                    ofrdx = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
-                    ofrdy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
-                    lu = new Point(oflux, ofluy);
-                    rd = new Point(ofrdx, ofrdy);
+                    flipx = (State.RandomSource.NextDouble() > 0.5 ? true : false);
+                    flipy = (State.RandomSource.NextDouble() > 0.5 ? true : false);
+                }
+                if (doRot)
+                {
                     rotangle = (State.RandomSource.NextDouble() * 2 - 1) * 90;
                 }
+                if (doAffine)
+                {
+                    if (inw > 1 && outw > 1 && inh > 1 && outh > 1)
+                    {
+                        oflux = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
+                        ofluy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
+                        ofrdx = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
+                        ofrdy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
+                    }
+                }
+
+                lu = new Point(oflux, ofluy);
+                rd = new Point(ofrdx, ofrdy);
 
                 var sframe = mat1.Clone();
                 if (inchannels != sframe.Channels())
@@ -221,7 +234,7 @@ namespace Components.Imaging
                     else { throw new Exception(); }
                 }
                 sframe = sframe.Resize(new Size(inw, inh), 0, 0, InterpolationFlags.Area);
-                sframe = Offset(sframe, lu, rd, flipx, flipy, rotangle);
+                sframe = EffectProcess.Offset(sframe, lu, rd, flipx, flipy, rotangle);
                 sframes.Add(sframe.Clone());
 
                 var tframe = mat2.Clone();
@@ -231,8 +244,8 @@ namespace Components.Imaging
                     else if (outchannels == 3) { Cv2.CvtColor(tframe, tframe, ColorConversionCodes.GRAY2BGR); }
                     else { throw new Exception(); }
                 }
-                tframe = Effect(tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area));
-                tframe = Offset(tframe, lu, rd, flipx, flipy, rotangle);
+                tframe = EffectProcess.Effect(tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area));
+                tframe = EffectProcess.Offset(tframe, lu, rd, flipx, flipy, rotangle);
                 tframes.Add(tframe.Clone());
             }
 
@@ -241,52 +254,5 @@ namespace Components.Imaging
             return ret;
         }
 
-        private Mat Effect(Mat source)
-        {
-            Mat frame = source.Clone();
-
-            //var frames = frame.Split();
-            //for (int i = 0; i < frames.Length; i++)
-            //{
-            //    Cv2.Laplacian(frames[i], frames[i], frames[i].Type());
-            //}
-            //Cv2.Merge(frames, frame);
-
-            return frame;
-        }
-
-        private Mat Offset(Mat source, Point leftup, Point rightdown, bool flipx, bool flipy, double rotangle)
-        {
-            if (source.Width <= 1 || source.Height <= 1)
-            {
-                return source;
-            }
-            else
-            {
-                Mat frame = source.Clone();
-                if (flipx && flipy)
-                {
-                    frame = frame.Flip(FlipMode.XY);
-                }
-                else
-                {
-                    if (flipx)
-                    {
-                        frame = frame.Flip(FlipMode.X);
-                    }
-                    if (flipy)
-                    {
-                        frame = frame.Flip(FlipMode.Y);
-                    }
-                }
-
-                var center = new Point2f(source.Width / 2, source.Height / 2);
-                Mat rMat = Cv2.GetRotationMatrix2D(center, rotangle, 1);
-                Cv2.WarpAffine(frame, frame, rMat, new Size(source.Rows, source.Cols));
-
-                frame = frame.Clone()[new Rect(leftup, new Size(source.Width - (leftup.X + rightdown.X), source.Height - (leftup.Y + rightdown.Y)))];
-                return frame.Resize(source.Size());
-            }
-        }
     }
 }

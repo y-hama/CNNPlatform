@@ -17,7 +17,9 @@ namespace CNNPlatform.Process
         internal Model.Model Model { get; set; } = null;
 
         protected abstract int BatchCount { get; }
+        protected virtual Utility.Types.DirectionPattern Direction { get; set; } = Utility.Types.DirectionPattern.Through;
 
+        #region Buffer
         protected Components.RNdMatrix Input { get { return Model.InputLayer.Variable.Input; } }
         protected Components.RNdMatrix Output { get { return Model.OutputLayer.Variable.Output; } }
         protected Components.RNdMatrix Sigma { get { return Model.OutputLayer.Variable.Sigma; } }
@@ -33,6 +35,7 @@ namespace CNNPlatform.Process
                 return teacher;
             }
         }
+        #endregion
 
         internal Task.InputLoader Loader { get; set; } = null;
 
@@ -75,6 +78,7 @@ namespace CNNPlatform.Process
                 Model = CNNPlatform.Model.Creater.Core.BasicImageCreater();
             }
             Console.WriteLine("BatchCount : {0}", BatchCount);
+            Model.Direction = Direction;
         }
 
         private void CreateInputLoader()

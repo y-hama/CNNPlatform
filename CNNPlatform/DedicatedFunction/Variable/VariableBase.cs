@@ -25,6 +25,8 @@ namespace CNNPlatform.DedicatedFunction.Variable
             }
         }
 
+        public bool UpdateRequest { get; set; } = false;
+
         public int BatchCount { get; set; }
 
         public int InWidth { get; set; }

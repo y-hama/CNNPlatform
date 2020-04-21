@@ -43,14 +43,16 @@ namespace CNNPlatform.DedicatedFunction.Variable
             OutWidth = (int)(OutScale * InWidth);
             OutHeight = (int)(OutScale * InHeight);
 
+            double sd_b = Math.Sqrt(1.0 / (InputChannels * KernelLength));
+            double sd_k = Math.Sqrt(1.0 / (InputChannels * KernelLength));
             if (shared != null)
             {
                 var obj = shared as Utility.Shared.ModelParameter;
                 var w = new Utility.Shared.ModelParameter.WeightData(2);
                 w.Data[0] = new Components.RNdMatrix(OutputChannels, 1, 1, 1);
                 w.Data[1] = new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1);
-                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InputChannels * KernelLength)));
-                Utility.Randomizer.Noize(ref w.Data[1].Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InputChannels * KernelLength)));
+                Utility.Randomizer.Noize(ref w.Data[0].Data, Utility.Randomizer.Sign.Both, 0, sd_b);
+                Utility.Randomizer.Noize(ref w.Data[1].Data, Utility.Randomizer.Sign.Both, 0, sd_k);
                 obj.Weignt.Add(w);
 
                 WeightBias = new Components.RNdMatrix(w.Data[0].Shape);
@@ -65,8 +67,8 @@ namespace CNNPlatform.DedicatedFunction.Variable
                 {
                     WeightBias = (new Components.RNdMatrix(OutputChannels, 1, 1, 1)) as Components.RNdMatrix;
                     WeightKernel = (new Components.RNdMatrix(InputChannels, OutputChannels, 2 * KernelSize + 1, 2 * KernelSize + 1)) as Components.RNdMatrix;
-                    Utility.Randomizer.Noize(ref WeightBias.Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InputChannels * KernelLength)));
-                    Utility.Randomizer.Noize(ref WeightKernel.Data, Utility.Randomizer.Sign.Both, 0, Math.Sqrt(2.0 / (InputChannels * KernelLength)));
+                    Utility.Randomizer.Noize(ref WeightBias.Data, Utility.Randomizer.Sign.Both, 0, sd_b);
+                    Utility.Randomizer.Noize(ref WeightKernel.Data, Utility.Randomizer.Sign.Both, 0, sd_k);
                 }
                 WeightDifference = new Components.Real[2];
             }

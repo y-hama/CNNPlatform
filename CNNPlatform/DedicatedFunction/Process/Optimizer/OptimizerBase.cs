@@ -12,7 +12,7 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
         protected bool Initialized { get; set; } = false;
         public static Components.Real Iteration { get; set; } = 0;
 
-        public abstract double Update(ref Components.Real[] _w, Components.Real[] diff, double rho = 0);
+        public abstract double Update(ref Components.Real[] _w, Components.Real[] diff, bool doUpdate, double rho = 0);
 
         public static OptimizerBase CreateInstance(Utility.Types.Optimizer type)
         {
@@ -21,9 +21,6 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
             {
                 case Utility.Types.Optimizer.Adam:
                     instance = new Adam();
-                    break;
-                case Utility.Types.Optimizer.AMSGrad:
-                    instance = new AMSGrad();
                     break;
                 case Utility.Types.Optimizer.AdaSelf:
                     instance = new AdaSelf();

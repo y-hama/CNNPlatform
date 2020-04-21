@@ -46,9 +46,11 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
         #endregion
 
         private const double center = 0.5;
-        private const double eta1 = 0.001;
+        private const double eta1 = 0.005;
+        private const double eta2 = 0.001;
+        private const double bd = 0.99;
 
-        public override double Update(ref Real[] _w, Real[] diff, double rho = 0)
+        public override double Update(ref Real[] _w, Real[] diff, bool doUpdate, double rho = 0)
         {
             var w = _w;
             if (!Initialized)
@@ -67,6 +69,8 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
             double max = diff.Max(x => Math.Abs(x));
             double sign = max > 1 ? -1 : 1;
             s1 = Math.Pow(10, sign * (Math.Ceiling(Math.Log10(max <= eps ? eps : max))));
+            double bdt = Math.Pow(bd, Iteration);
+            double eta = bdt * eta1 + (1 - bdt) * eta2;
             Components.GPGPU.Parallel.For(0, w.Length, i =>
             {
                 var dw_a = dw_Adam(i, diff[i]);
@@ -80,7 +84,7 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
                 var dw = (np * dw_a + (1 - np) * dw_s);
 
                 delta += dw;
-                w[i] = w[i] - (eta1) * dw;
+                if (doUpdate) { w[i] = w[i] - (eta) * dw; }
 
                 pd[i] = ((1 - np) * pd[i] + (np) * diff[i]);
                 vd[i] = ((1 - np) * vd[i] + (np) * vvd);

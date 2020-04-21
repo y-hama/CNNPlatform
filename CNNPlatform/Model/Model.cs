@@ -24,7 +24,24 @@ namespace CNNPlatform.Model
             get { return Layer[idx]; }
         }
 
-        internal LayerBase InputLayer { get { return Layer[0]; } }
+        public Utility.Types.DirectionPattern Direction { get; set; } = Utility.Types.DirectionPattern.Through;
+        internal int InputLayerIndex
+        {
+            get
+            {
+                int idx = 0;
+                for (int i = 0; i < LayerCount; i++)
+                {
+                    if (Layer[i].Direction == Direction)
+                    {
+                        idx = i; break;
+                    }
+                }
+                return idx;
+            }
+        }
+
+        internal LayerBase InputLayer { get { return Layer[InputLayerIndex]; } }
         internal LayerBase OutputLayer { get { return Layer[LayerCount - 1]; } }
 
         public int LayerCount { get { return Layer.Count; } }
@@ -65,6 +82,7 @@ namespace CNNPlatform.Model
             var gppsplit = glparam.Split(' ');
             int.TryParse(gppsplit[0], out readtmp);
             Epoch = readtmp;
+            Console.WriteLine("Epoch : {0}", Epoch);
             int.TryParse(gppsplit[1], out readtmp);
             Generation = readtmp;
             #endregion
@@ -153,7 +171,31 @@ namespace CNNPlatform.Model
                 }
                 var tdinfo = new System.IO.DirectoryInfo(location + @"\" + maxepo.ToString());
                 var mdlfile = new List<System.IO.FileInfo>(tdinfo.GetFiles()).Find(x => x.Extension == ".mdl");
-                return new Model(mdlfile.FullName, batchcount);
+                Model model = null;
+
+                while (model == null)
+                {
+                    try
+                    {
+                        model = new Model(mdlfile.FullName, batchcount);
+                    }
+                    catch (Exception)
+                    {
+                        model = null;
+                        if (maxepo > 0)
+                        {
+                            Console.WriteLine("ModelLoad Error. Try PrevEpoch");
+                            maxepo--;
+                            tdinfo = new System.IO.DirectoryInfo(location + @"\" + maxepo.ToString());
+                            if (tdinfo.Exists)
+                            {
+                                mdlfile = new List<System.IO.FileInfo>(tdinfo.GetFiles()).Find(x => x.Extension == ".mdl");
+                            }
+                        }
+                        else { throw new Exception(); }
+                    }
+                }
+                return model;
             }
             return null;
         }
@@ -171,6 +213,24 @@ namespace CNNPlatform.Model
                 model.Layer.Add(Layer[i].Clone());
             }
             return model;
+        }
+
+        public void UpdateState(bool request, int targetlayer = -1)
+        {
+            if (targetlayer < 0)
+            {
+                foreach (var item in Layer)
+                {
+                    item.Variable.UpdateRequest = request;
+                }
+            }
+            else
+            {
+                if (targetlayer < LayerCount)
+                {
+                    Layer[targetlayer].Variable.UpdateRequest = request;
+                }
+            }
         }
 
         private void GetLayerInputInfomation(out int inw, out int inh, out int inch)
@@ -197,7 +257,7 @@ namespace CNNPlatform.Model
 
             return new Layer.Convolution(true)
             {
-                Direction = LayerBase.DirectionPattern.TurnBack,
+                Direction = Utility.Types.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.ConvolutionVariable()
                 {
                     BatchCount = BatchCount,
@@ -222,7 +282,7 @@ namespace CNNPlatform.Model
 
             return new Layer.Pooling(true)
             {
-                Direction = LayerBase.DirectionPattern.TurnBack,
+                Direction = Utility.Types.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.PoolingVariable()
                 {
                     BatchCount = BatchCount,
@@ -242,7 +302,7 @@ namespace CNNPlatform.Model
 
             return new Layer.Activation(true)
             {
-                Direction = LayerBase.DirectionPattern.TurnBack,
+                Direction = Utility.Types.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.ActivationVariable()
                 {
                     BatchCount = BatchCount,
@@ -261,7 +321,7 @@ namespace CNNPlatform.Model
 
             return new Layer.Affine(true)
             {
-                Direction = LayerBase.DirectionPattern.TurnBack,
+                Direction = Utility.Types.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.AffineVariable()
                 {
                     BatchCount = BatchCount,
@@ -319,7 +379,7 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Convolution(true)
             {
-                Direction = LayerBase.DirectionPattern.Through,
+                Direction = Utility.Types.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.ConvolutionVariable()
                 {
                     BatchCount = BatchCount,
@@ -345,7 +405,7 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Pooling(true)
             {
-                Direction = LayerBase.DirectionPattern.Through,
+                Direction = Utility.Types.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.PoolingVariable()
                 {
                     BatchCount = BatchCount,
@@ -366,7 +426,7 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Activation(true)
             {
-                Direction = LayerBase.DirectionPattern.Through,
+                Direction = Utility.Types.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.ActivationVariable()
                 {
                     BatchCount = BatchCount,
@@ -386,7 +446,7 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Affine(true)
             {
-                Direction = LayerBase.DirectionPattern.Through,
+                Direction = Utility.Types.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.AffineVariable()
                 {
                     BatchCount = BatchCount,
@@ -419,7 +479,7 @@ namespace CNNPlatform.Model
                     item.RefreshError();
                 }
             }
-            Layer[0].Variable.Input = input;
+            InputLayer.Variable.Input = input;
             Teacher = teacher;
             #region LearningProcess
             for (int i = 0; i < LayerCount; i++)
@@ -430,7 +490,7 @@ namespace CNNPlatform.Model
                     (this[i].Variable as DedicatedFunction.Variable.VariableBase).Output.CopyTo((this[i + 1].Variable as DedicatedFunction.Variable.VariableBase).Input);
                 }
             }
-            Layer[LayerCount - 1].Variable.Sigma = Layer[LayerCount - 1].Variable.Output - teacher;
+            OutputLayer.Variable.Sigma = OutputLayer.Variable.Output - teacher;
             for (int i = this.LayerCount - 1; i >= 0; i--)
             {
                 this[i].BackFunction.Do(this[i].Variable);
@@ -440,8 +500,22 @@ namespace CNNPlatform.Model
                 }
             }
             this.Generation++;
-            this.Error = Layer[LayerCount - 1].Variable.Error[0];
+            this.Error = OutputLayer.Variable.Error[0];
             #endregion
+        }
+
+        public void Inference(Components.RNdMatrix input, out Components.RNdMatrix output)
+        {
+            InputLayer.Variable.Input = input;
+            for (int i = 0; i < LayerCount; i++)
+            {
+                this[i].ForwardFunction.Do(this[i].Variable);
+                if (i < this.LayerCount - 1)
+                {
+                    (this[i].Variable as DedicatedFunction.Variable.VariableBase).Output.CopyTo((this[i + 1].Variable as DedicatedFunction.Variable.VariableBase).Input);
+                }
+            }
+            output = OutputLayer.Variable.Output.Clone() as Components.RNdMatrix;
         }
         #endregion
 

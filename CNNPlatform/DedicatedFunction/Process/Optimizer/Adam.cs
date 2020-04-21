@@ -17,7 +17,7 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
         private const double b2 = 0.999;
         private const double eps = 1e-8;
 
-        public override double Update(ref Real[] _w, Real[] diff, double rho = 0)
+        public override double Update(ref Real[] _w, Real[] diff, bool doUpdate, double rho = 0)
         {
             var w = _w;
             if (!Initialized)
@@ -34,8 +34,8 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
                 v[i] = b2 * v[i] + (1 - b2) * diff[i] * diff[i];
                 var mhat = m[i] / (1 - Math.Pow(b1, Iteration));
                 var vhat = v[i] / (1 - Math.Pow(b2, Iteration));
-                var dw = _rho * (mhat / (Math.Sqrt(vhat + eps)));
-                w[i] = w[i] - dw;
+                var dw = (mhat / (Math.Sqrt(vhat + eps)));
+                if (doUpdate) { w[i] = w[i] - _rho * dw; }
                 delta += dw;
             });
             return delta;

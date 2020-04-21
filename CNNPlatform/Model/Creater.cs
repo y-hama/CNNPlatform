@@ -38,7 +38,6 @@ namespace CNNPlatform.Model
             return model;
         }
 
-
         public Model test()
         {
             var model = new CNNPlatform.Model.Model(Instance, BatchCount, 3, 8, 8);

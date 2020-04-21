@@ -6,16 +6,21 @@ using System.Threading.Tasks;
 
 namespace CNNPlatform.Utility
 {
-    class Types
+    public class Types
     {
-        public enum Optimizer
+        public enum DirectionPattern
+        {
+            Through,
+            TurnBack,
+        }
+
+        internal enum Optimizer
         {
             Adam,
-            AMSGrad,
             AdaSelf,
         }
 
-        public enum Activator
+        internal enum Activator
         {
             Sigmoid,
             ReLU,

@@ -98,6 +98,7 @@
     <Compile Include="GPGPU\Parallel.cs" />
     <Compile Include="Imaging\Camera.cs" />
     <Compile Include="Imaging\Converter.cs" />
+    <Compile Include="Imaging\Effect.cs" />
     <Compile Include="Imaging\FileLoader.cs" />
     <Compile Include="Imaging\View.cs" />
     <Compile Include="Locker\FileConverter.cs" />

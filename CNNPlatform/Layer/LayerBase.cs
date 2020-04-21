@@ -8,18 +8,12 @@ namespace CNNPlatform.Layer
 {
     abstract class LayerBase
     {
-        public enum DirectionPattern
-        {
-            Through,
-            TurnBack,
-        }
-
         public DedicatedFunction.Variable.VariableBase Variable { get; set; }
 
         public Components.GPGPU.Function.FunctionBase ForwardFunction { get; set; }
         public Components.GPGPU.Function.FunctionBase BackFunction { get; set; }
 
-        public DirectionPattern Direction { get; set; } = DirectionPattern.Through;
+        public Utility.Types.DirectionPattern Direction { get; set; } = Utility.Types.DirectionPattern.Through;
 
         public string ParameterStatus { get { return Variable.GetStatus + " " + Variable.GetSizeStatus; } }
 
@@ -62,7 +56,7 @@ namespace CNNPlatform.Layer
             #region
             var lbparams = layerbaseparam.Split('\n');
             layer = (LayerBase)Activator.CreateInstance(Type.GetType(lbparams[0]), new object[] { true });
-            layer.Direction = (DirectionPattern)Enum.Parse(typeof(DirectionPattern), lbparams[1]);
+            layer.Direction = (Utility.Types.DirectionPattern)Enum.Parse(typeof(Utility.Types.DirectionPattern), lbparams[1]);
             #endregion
 
             var variableparam = split[1];

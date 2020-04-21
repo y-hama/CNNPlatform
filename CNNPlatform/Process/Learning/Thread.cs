@@ -11,13 +11,21 @@ namespace CNNPlatform.Process.Learning
         #region Singleton
         private Thread() { StartTime = DateTime.Now; }
         public static Thread Worker { get; } = new Thread();
+        private DateTime StartTime { get; set; }
         #endregion
 
-        private DateTime StartTime { get; set; }
-
+        private enum FlagState
+        {
+            Initial,
+            Adjustment,
+            Update,
+        }
+        private FlagState State { get; set; } = FlagState.Initial;
         private bool IterationFlag { get; set; }
 
         public string LoadFolder { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + @"\sample\";
+
+        public bool SaveModel { get; set; } = true;
 
         private Task.ModelSaver ModelSaver { get; set; }
 
@@ -28,6 +36,9 @@ namespace CNNPlatform.Process.Learning
             Loader.InputSource = CNNPlatform.Process.Task.InputLoader.Source.File;
 
             Loader.SourceLocation = new System.IO.DirectoryInfo(LoadFolder);
+            Loader.Flip = true;
+            Loader.Rotation = true;
+            Loader.Offset = true;
         }
 
         protected override void CreateModelWriter()
@@ -48,8 +59,27 @@ namespace CNNPlatform.Process.Learning
         {
             if (IterationFlag)
             {
-                ModelSaver.Pushback(Model.Clone());
-                ModelSaver.Request.Set();
+                if (SaveModel)
+                {
+                    ModelSaver.Pushback(Model.Clone());
+                    ModelSaver.Request.Set();
+                }
+                switch (State)
+                {
+                    case FlagState.Initial:
+                        State = FlagState.Adjustment;
+                        break;
+                    case FlagState.Adjustment:
+                        State = FlagState.Update;
+                        {
+                            Model.UpdateState(true);
+                        }
+                        break;
+                    case FlagState.Update:
+                        break;
+                    default:
+                        break;
+                }
             }
 
             Model.Learning(Input, Teacher, IterationFlag);

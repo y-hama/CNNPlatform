@@ -14,7 +14,8 @@ namespace CNNPlatform
         [STAThread]
         internal static void Main(string[] args)
         {
-            Process.Learning.Thread.Worker.Start();
+            //Process.Learning.Thread.Worker.Start();
+            Process.Inference.Thread.Worker.Start();
         }
     }
 }
