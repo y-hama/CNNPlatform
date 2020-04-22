@@ -150,7 +150,7 @@ namespace CNNPlatform.DedicatedFunction.Variable
             var dinfo = new System.IO.DirectoryInfo(location);
             for (int i = 0; i < hash.Length; i++)
             {
-                loadbuffer.Add(Components.RNdMatrix.Load(dinfo, hash[i]));
+                loadbuffer.Add((new Components.RNdMatrix()).Load(dinfo, hash[i]));
             }
             DecodeOption(loadbuffer);
             ObjectDecoded = true;
@@ -166,7 +166,7 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
             var ave = Sigma.Data.Average(x => x);
 
-            Components.GPGPU.Parallel.For(0, Sigma.Length, i0 =>
+            Tasks.ForParallel(0, Sigma.Length, i0 =>
             {
                 err += Sigma.Data[i0] * Sigma.Data[i0];
                 sd += (Sigma.Data[i0] - ave) * (Sigma.Data[i0] - ave);

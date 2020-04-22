@@ -23,6 +23,7 @@ namespace CNNPlatform.DedicatedFunction.Variable
             get
             {
                 string ext = string.Empty;
+                ext += OptimizerType.ToString() + ", ";
                 return ext;
             }
         }
@@ -83,7 +84,7 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         public override string EncodeOption()
         {
-            return Weight.Hash;
+            return Weight.GetHash();
         }
 
         protected override void DecodeParameterCore(object[] values)

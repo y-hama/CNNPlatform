@@ -8,7 +8,8 @@ namespace Components
     [Serializable]
     public abstract class RNdObject
     {
-        public string Hash { get; protected set; }
+        public string Hash { get; set; }
+        public string GetHash() { return Hash; }
 
         public Real[] Data;
 
@@ -20,9 +21,10 @@ namespace Components
         public RNdObject()
         {
             Hash = Locker.HashCreator.GetString(64);
+            Locker.FileConverter<RNdObject>.AddXMLSerializerType(GetType());
         }
 
-        public int[] Shape { get; protected set; }
+        public int[] Shape { get; set; }
         public int Length { get { int l = 1; foreach (var item in Shape) { l *= item; } return l; } }
         public int BatchSize { get { return Shape[0]; } }
         public int Channels { get { return Shape[1]; } }
@@ -46,19 +48,11 @@ namespace Components
         public abstract RNdObject Abs();
 
         public abstract RNdObject Clone();
-        //public abstract void Show(string name, int batchindex = 0);
 
-        public void Save(System.IO.DirectoryInfo location)
-        {
-            string name = location.FullName + @"\" + Hash;
-            Locker.FileConverter.SaveToBinaryFile(this, name);
-        }
+        protected Locker.FileType FileType { get; set; } = Locker.FileType.XML;
+        public abstract void Save(System.IO.DirectoryInfo location);
 
-        public static RNdObject Load(System.IO.DirectoryInfo location, string hash)
-        {
-            string name = location.FullName + @"\" + hash;
-            return Locker.FileConverter.LoadFromBinaryFile(name) as RNdObject;
-        }
+        public abstract RNdObject Load(System.IO.DirectoryInfo location, string hash);
 
         public static RNdObject operator -(RNdObject o1, RNdObject o2)
         {

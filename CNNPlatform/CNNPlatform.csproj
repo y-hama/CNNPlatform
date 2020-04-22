@@ -66,10 +66,13 @@
     <Compile Include="DedicatedFunction\Process\Optimizer\OptimizerBase.cs" />
     <Compile Include="DedicatedFunction\Process\PoolingBack.cs" />
     <Compile Include="DedicatedFunction\Process\PoolingForward.cs" />
+    <Compile Include="DedicatedFunction\Process\ReshapeBack.cs" />
+    <Compile Include="DedicatedFunction\Process\ReshapeForward.cs" />
     <Compile Include="DedicatedFunction\Variable\ActivationVariable.cs" />
     <Compile Include="DedicatedFunction\Variable\AffineVariable.cs" />
     <Compile Include="DedicatedFunction\Variable\ConvolutionVariable.cs" />
     <Compile Include="DedicatedFunction\Variable\PoolingVariable.cs" />
+    <Compile Include="DedicatedFunction\Variable\ReshapeVariable.cs" />
     <Compile Include="DedicatedFunction\Variable\VariableBase.cs" />
     <Compile Include="Initializer.cs" />
     <Compile Include="Layer\Activation.cs" />
@@ -77,6 +80,7 @@
     <Compile Include="Layer\Convolution.cs" />
     <Compile Include="Layer\LayerBase.cs" />
     <Compile Include="Layer\Pooling.cs" />
+    <Compile Include="Layer\Reshape.cs" />
     <Compile Include="Model\Model.cs" />
     <Compile Include="Model\Creater.cs" />
     <Compile Include="Process\Inference\Thread.cs" />

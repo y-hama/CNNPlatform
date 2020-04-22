@@ -15,9 +15,7 @@ namespace CNNPlatform.Process.Inference
         #endregion
 
         protected override int BatchCount { get { return 1; } }
-
-        public Utility.Types.DirectionPattern Pattern { set { Direction = value; } }
-
+        
         protected override void SetInputLoaderOption()
         {
             Loader.InputSource = CNNPlatform.Process.Task.InputLoader.Source.Camera;

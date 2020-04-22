@@ -24,17 +24,41 @@ namespace CNNPlatform.Model
             get { return Layer[idx]; }
         }
 
-        public Utility.Types.DirectionPattern Direction { get; set; } = Utility.Types.DirectionPattern.Through;
+        private int BlockIndex { get; set; } = 0;
+        public int StartBlock { get; set; } = -1;
+        public int EndBlock { get; set; } = -1;
         internal int InputLayerIndex
         {
             get
             {
                 int idx = 0;
-                for (int i = 0; i < LayerCount; i++)
+                if (StartBlock >= 0)
                 {
-                    if (Layer[i].Direction == Direction)
+                    if (StartBlock < LayerCount)
                     {
-                        idx = i; break;
+                        if (StartBlock <= EndBlock)
+                        {
+                            idx = StartBlock;
+                        }
+                        else { idx = EndBlock; }
+                    }
+                }
+                return idx;
+            }
+        }
+        internal int OutputLayerIndex
+        {
+            get
+            {
+                int idx = LayerCount - 1;
+                if (EndBlock >= 0)
+                {
+                    if (EndBlock < LayerCount)
+                    {
+                        if (StartBlock <= EndBlock)
+                        {
+                            idx = EndBlock;
+                        }
                     }
                 }
                 return idx;
@@ -42,7 +66,7 @@ namespace CNNPlatform.Model
         }
 
         internal LayerBase InputLayer { get { return Layer[InputLayerIndex]; } }
-        internal LayerBase OutputLayer { get { return Layer[LayerCount - 1]; } }
+        internal LayerBase OutputLayer { get { return Layer[OutputLayerIndex]; } }
 
         public int LayerCount { get { return Layer.Count; } }
 
@@ -109,7 +133,7 @@ namespace CNNPlatform.Model
 
         public void Save(string location)
         {
-            #region ModelBaseFile
+            #region ModelBaseFile Create
             string text = this.GetType().ToString() + "\n";
             text += Epoch + " " + Generation + " " + Error + "\n";
             text += InputChannels.ToString() + " " + InputWidth.ToString() + " " + InputHeight.ToString() + "\n";
@@ -123,15 +147,17 @@ namespace CNNPlatform.Model
             {
                 text += item;
             }
-            using (var fs = new System.IO.StreamWriter(location + @"\" + "model" + ".mdl", false))
-            {
-                fs.WriteLine(text);
-            }
             #endregion
             #region ModelParameterFile
             var ploc = new System.IO.DirectoryInfo(location + @"\parameter");
             ploc.Create();
-            Components.GPGPU.Parallel.For(0, LayerCount, i => { Layer[i].Variable.SaveObject(ploc); });
+            Tasks.ForParallel(0, LayerCount, i => { Layer[i].Variable.SaveObject(ploc); });
+            #endregion
+            #region ModelBaseFile Save
+            using (var fs = new System.IO.StreamWriter(location + @"\" + "model" + ".mdl", false))
+            {
+                fs.WriteLine(text);
+            }
             #endregion
         }
 
@@ -191,6 +217,7 @@ namespace CNNPlatform.Model
                             {
                                 mdlfile = new List<System.IO.FileInfo>(tdinfo.GetFiles()).Find(x => x.Extension == ".mdl");
                             }
+                            else { throw new Exception(); }
                         }
                         else { throw new Exception(); }
                     }
@@ -246,8 +273,14 @@ namespace CNNPlatform.Model
 
         private void AddLayer(Layer.LayerBase layer)
         {
+            layer.Block = BlockIndex;
             Layer.Add(layer);
-            Console.WriteLine(string.Format("Layer({0,2}) : {1} -> {2}", LayerCount, layer.GetType().Name, layer.ParameterStatus));
+            Console.WriteLine(string.Format("Layer({0,2}) block{1,2} : {2} -> {3}", LayerCount, layer.Block, layer.GetType().Name, layer.ParameterStatus));
+        }
+
+        public void SetNewBlock()
+        {
+            BlockIndex++;
         }
 
         #region CreateReverseLayer(private)
@@ -257,7 +290,6 @@ namespace CNNPlatform.Model
 
             return new Layer.Convolution(true)
             {
-                Direction = Utility.Types.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.ConvolutionVariable()
                 {
                     BatchCount = BatchCount,
@@ -282,7 +314,6 @@ namespace CNNPlatform.Model
 
             return new Layer.Pooling(true)
             {
-                Direction = Utility.Types.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.PoolingVariable()
                 {
                     BatchCount = BatchCount,
@@ -302,7 +333,6 @@ namespace CNNPlatform.Model
 
             return new Layer.Activation(true)
             {
-                Direction = Utility.Types.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.ActivationVariable()
                 {
                     BatchCount = BatchCount,
@@ -321,7 +351,6 @@ namespace CNNPlatform.Model
 
             return new Layer.Affine(true)
             {
-                Direction = Utility.Types.DirectionPattern.TurnBack,
                 Variable = new DedicatedFunction.Variable.AffineVariable()
                 {
                     BatchCount = BatchCount,
@@ -338,6 +367,26 @@ namespace CNNPlatform.Model
                 }.Confirm(Instance),
             };
         }
+
+        private Layer.LayerBase ReverseReshape(VariableBase _variable)
+        {
+            var variable = _variable as ReshapeVariable;
+
+            return new Layer.Reshape(true)
+            {
+                Variable = new DedicatedFunction.Variable.ReshapeVariable()
+                {
+                    BatchCount = BatchCount,
+                    InputChannels = variable.OutputChannels,
+                    InWidth = variable.OutWidth,
+                    InHeight = variable.OutHeight,
+
+                    OutputChannels = variable.InputChannels,
+                    OutWidth = variable.InWidth,
+                    OutHeight = variable.InHeight,
+                }.Confirm(Instance),
+            };
+        }
         #endregion
 
         #region AddLayer(Public)
@@ -347,26 +396,36 @@ namespace CNNPlatform.Model
             for (int i = LayerCount - 1; i >= 0; i--)
             {
                 var type = Layer[i].GetType();
+                LayerBase revlayer = null;
                 if (Layer[i] is Layer.Convolution)
                 {
-                    list.Add(ReverseConvolution(Layer[i].Variable));
+                    revlayer = (ReverseConvolution(Layer[i].Variable));
                 }
                 else if (Layer[i] is Layer.Pooling)
                 {
-                    list.Add(ReversePooling(Layer[i].Variable));
+                    revlayer = (ReversePooling(Layer[i].Variable));
                 }
                 else if (Layer[i] is Layer.Activation)
                 {
-                    list.Add(ReverseActivation(Layer[i].Variable));
+                    revlayer = (ReverseActivation(Layer[i].Variable));
                 }
                 else if (Layer[i] is Layer.Affine)
                 {
-                    list.Add(ReverseAffine(Layer[i].Variable));
+                    revlayer = (ReverseAffine(Layer[i].Variable));
                 }
+                else if (Layer[i] is Layer.Reshape)
+                {
+                    revlayer = (ReverseReshape(Layer[i].Variable));
+                }
+                list.Add(revlayer);
             }
 
+            SetNewBlock();
+            int tmpblk = Layer[LayerCount - 1].Block;
             for (int i = 0; i < list.Count; i++)
             {
+                int reverse = list.Count - (i + 1);
+                if (tmpblk != Layer[reverse].Block) { SetNewBlock(); }
                 AddLayer(list[i]);
             }
         }
@@ -379,7 +438,6 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Convolution(true)
             {
-                Direction = Utility.Types.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.ConvolutionVariable()
                 {
                     BatchCount = BatchCount,
@@ -405,7 +463,6 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Pooling(true)
             {
-                Direction = Utility.Types.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.PoolingVariable()
                 {
                     BatchCount = BatchCount,
@@ -426,7 +483,6 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Activation(true)
             {
-                Direction = Utility.Types.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.ActivationVariable()
                 {
                     BatchCount = BatchCount,
@@ -446,7 +502,6 @@ namespace CNNPlatform.Model
 
             AddLayer(new Layer.Affine(true)
             {
-                Direction = Utility.Types.DirectionPattern.Through,
                 Variable = new DedicatedFunction.Variable.AffineVariable()
                 {
                     BatchCount = BatchCount,
@@ -462,6 +517,34 @@ namespace CNNPlatform.Model
                     Rho = rho,
                 }.Confirm(Instance),
             });
+        }
+
+        public void AddReshape(int outw, int outh)
+        {
+            int inw, inh, inch;
+            GetLayerInputInfomation(out inw, out inh, out inch);
+
+            int outch = (inw * inh * inch) / (outw * outh);
+            if (((inw * inh * inch) - (outw * outh * outch) != 0))
+            {
+                throw new Exception();
+            }
+
+            AddLayer(new Layer.Reshape(true)
+            {
+                Variable = new DedicatedFunction.Variable.ReshapeVariable()
+                {
+                    BatchCount = BatchCount,
+                    InputChannels = inch,
+                    InWidth = inw,
+                    InHeight = inh,
+
+                    OutputChannels = outch,
+                    OutWidth = outw,
+                    OutHeight = outh,
+                }.Confirm(Instance),
+            });
+
         }
         #endregion
 
@@ -482,7 +565,7 @@ namespace CNNPlatform.Model
             InputLayer.Variable.Input = input;
             Teacher = teacher;
             #region LearningProcess
-            for (int i = InputLayerIndex; i < LayerCount; i++)
+            for (int i = InputLayerIndex; i <= OutputLayerIndex; i++)
             {
                 this[i].ForwardFunction.Do(this[i].Variable);
                 if (i < this.LayerCount - 1)
@@ -491,7 +574,7 @@ namespace CNNPlatform.Model
                 }
             }
             OutputLayer.Variable.Sigma = OutputLayer.Variable.Output - teacher;
-            for (int i = this.LayerCount - 1; i >= InputLayerIndex; i--)
+            for (int i = OutputLayerIndex; i >= InputLayerIndex; i--)
             {
                 this[i].BackFunction.Do(this[i].Variable);
                 if (i > 0)
@@ -524,10 +607,10 @@ namespace CNNPlatform.Model
         {
             var viweset = new Components.RNdMatrix[]
             {
-                Layer[0].Variable.Input,
+                InputLayer.Variable.Input,
                 Teacher.AreaSize == 0 ? new Components.RNdMatrix(OutputLayer.Variable.Output.Shape) : Teacher,
-                (Components.RNdMatrix)Layer[LayerCount - 1].Variable.Sigma.Abs(),
-                Layer[LayerCount - 1].Variable.Output,
+                (Components.RNdMatrix)OutputLayer.Variable.Sigma.Abs(),
+                OutputLayer.Variable.Output,
             };
             return Components.Imaging.View.ConvertToResultImage(viweset, width, height);
         }

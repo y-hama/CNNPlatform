@@ -108,7 +108,7 @@ namespace Components.GPGPU.Function
         protected delegate void Function();
         protected abstract void CpuFunction();
         protected abstract void GpuFunction();
-
+        
         protected virtual void CreateOption() { }
         protected virtual void UpdateWithCondition() { }
         #endregion
@@ -197,7 +197,7 @@ namespace Components.GPGPU.Function
             Queue[sellectionIndex].Finish();
         }
 
-        protected void OptionCreater()
+        public void OptionCreater()
         {
             if (!OptionCreated)
             {

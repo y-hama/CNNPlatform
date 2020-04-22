@@ -31,9 +31,9 @@ namespace CNNPlatform.DedicatedFunction.Variable
             get
             {
                 string ext = string.Empty;
+                ext += OptimizerType.ToString() + ", ";
                 ext += KernelSize.ToString() + ", ";
                 ext += KernelExpand.ToString() + ", ";
-                ext += OptimizerType.ToString() + ", ";
                 return ext;
             }
         }
@@ -109,7 +109,7 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         public override string EncodeOption()
         {
-            return WeightBias.Hash + "\n" + WeightKernel.Hash;
+            return WeightBias.GetHash() + "\n" + WeightKernel.GetHash();
         }
 
         protected override void DecodeParameterCore(object[] values)

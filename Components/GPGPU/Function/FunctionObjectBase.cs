@@ -10,7 +10,7 @@ namespace Components.GPGPU.Function
         #region Iteration
         public void Parallel(int start, int end, Action<int> func)
         {
-            GPGPU.Parallel.For(start, end, func);
+            Tasks.ForParallel(start, end, func);
         }
         #endregion
 

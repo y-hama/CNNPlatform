@@ -16,6 +16,10 @@ namespace Components.Imaging
             int tilec = (int)Math.Ceiling(Math.Sqrt(count));
             int width = mats.Select(x => x.Width).Max();
             int height = mats.Select(x => x.Width > 1 ? x.Height : 0).Max();
+            if (height == 0)
+            {
+                height = mats.Select(x => x.Height).Max();
+            }
 
             Mat frame = new Mat(new Size(width * tilec, height * tilec), MatType.CV_8UC3, new Scalar(0));
 

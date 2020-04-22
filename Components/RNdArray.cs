@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace Components
 {
@@ -11,7 +12,7 @@ namespace Components
     internal class RNdArray : RNdObject
     {
         #region Constructor
-        private RNdArray() { }
+        public RNdArray() { }
         public RNdArray(int length)
         {
             this.Shape = new int[4];
@@ -55,6 +56,18 @@ namespace Components
             this.Shape[3] = data[0].Length;
         }
         #endregion
+
+        public override void Save(DirectoryInfo location)
+        {
+            string name = location.FullName + @"\" + Hash;
+            Locker.FileConverter<RNdArray>.Save(this, name, FileType);
+        }
+
+        public override RNdObject Load(DirectoryInfo location, string hash)
+        {
+            string name = location.FullName + @"\" + hash;
+            return Locker.FileConverter<RNdArray>.Load(name, FileType);
+        }
 
         public override RNdObject Clone()
         {

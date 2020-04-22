@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.IO;
 
 //using OpenCvSharp;
 
@@ -12,7 +13,7 @@ namespace Components
     public class RNdMatrix : RNdObject
     {
         #region Constructor
-        private RNdMatrix() { }
+        public RNdMatrix() { }
         public RNdMatrix(int batchsize, int ch, int wth, int hgt)
         {
             this.Shape = new int[4];
@@ -46,77 +47,19 @@ namespace Components
                 }
             }
         }
-
-        //public RNdMatrix(Mat frame)
-        //{
-        //    this.Shape = new int[4];
-        //    Shape[0] = 1;
-        //    Shape[1] = frame.Channels();
-        //    Shape[2] = frame.Width;
-        //    Shape[3] = frame.Height;
-        //    Data = MatToArray(frame);
-        //}
-
-        //public RNdMatrix(Mat[] frames)
-        //{
-        //    if (frames == null) { return; }
-        //    if (frames.Length == 0) { return; }
-
-        //    Size size = frames[0].Size();
-        //    this.Shape = new int[4];
-        //    Shape[0] = frames.Length;
-        //    Shape[1] = frames[0].Channels();
-        //    Shape[2] = size.Width; Shape[3] = size.Height;
-
-        //    Real[][] temporary = new Real[BatchSize][];
-        //    for (int b = 0; b < BatchSize; b++)
-        //    {
-        //        for (int i = 0; i < frames.Length; i++)
-        //        {
-        //            if (frames[b].Size() != size) { Cv2.Resize(frames[b], frames[b], size); }
-        //            temporary[b] = MatToArray(frames[b]);
-        //        }
-        //    }
-
-        //    Data = new Real[Length];
-        //    int pos = 0;
-        //    for (int i = 0; i < frames.Length; i++)
-        //    {
-        //        Array.Copy(temporary[i], 0, Data, pos, temporary[i].Length);
-        //        pos += temporary[i].Length;
-        //    }
-        //}
-
-        //public RNdMatrix(Mat[][] framesArray)
-        //{
-        //    if (framesArray == null) { return; }
-        //    if (framesArray.Length == 0) { return; }
-
-        //    Size size = framesArray[0][0].Size();
-        //    this.Shape = new int[4];
-        //    Shape[0] = framesArray.Length;
-        //    Shape[1] = framesArray[0][0].Channels();
-        //    Shape[2] = size.Width; Shape[3] = size.Height;
-
-        //    Real[][][] temporary = new Real[BatchSize][][];
-        //    for (int b = 0; b < BatchSize; b++)
-        //    {
-        //        temporary[b] = new Real[framesArray.Length][];
-        //        for (int i = 0; i < framesArray.Length; i++)
-        //        {
-        //            if (framesArray[b][i].Size() != size) { Cv2.Resize(framesArray[b][i], framesArray[b][i], size); }
-        //            temporary[b][i] = MatToArray(framesArray[b][i]);
-        //        }
-        //    }
-        //    Data = new Real[Length];
-        //    int pos = 0;
-        //    for (int i = 0; i < framesArray.Length; i++)
-        //    {
-        //        Array.Copy(temporary[i], 0, Data, pos, AreaSize);
-        //        pos += temporary[i].Length;
-        //    }
-        //}
         #endregion
+
+        public override void Save(DirectoryInfo location)
+        {
+            string name = location.FullName + @"\" + Hash;
+            Locker.FileConverter<RNdMatrix>.Save(this, name, FileType);
+        }
+
+        public override RNdObject Load(DirectoryInfo location, string hash)
+        {
+            string name = location.FullName + @"\" + hash;
+            return Locker.FileConverter<RNdMatrix>.Load(name, FileType);
+        }
 
         public Real this[int b, int c, int x, int y]
         {

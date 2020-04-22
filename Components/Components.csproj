@@ -95,7 +95,6 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GPGPU\Parallel.cs" />
     <Compile Include="Imaging\Camera.cs" />
     <Compile Include="Imaging\Converter.cs" />
     <Compile Include="Imaging\Effect.cs" />

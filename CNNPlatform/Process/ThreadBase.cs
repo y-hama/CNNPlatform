@@ -17,7 +17,9 @@ namespace CNNPlatform.Process
         internal Model.Model Model { get; set; } = null;
 
         protected abstract int BatchCount { get; }
-        protected virtual Utility.Types.DirectionPattern Direction { get; set; } = Utility.Types.DirectionPattern.TurnBack;
+
+        protected virtual int StartBlock { get; } = -1;
+        protected virtual int EndBlock { get; } = -1;
 
         #region Buffer
         protected Components.RNdMatrix Input { get { return Model.InputLayer.Variable.Input; } }
@@ -78,7 +80,8 @@ namespace CNNPlatform.Process
                 Model = CNNPlatform.Model.Creater.Core.BasicImageCreater();
             }
             Console.WriteLine("BatchCount : {0}", BatchCount);
-            Model.Direction = Direction;
+            Model.StartBlock = StartBlock;
+            Model.EndBlock = EndBlock;
         }
 
         private void CreateInputLoader()

@@ -28,7 +28,7 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
             }
             double _rho = (a + rho) / 2;
             double delta = 0;
-            Components.GPGPU.Parallel.For(0, w.Length, i =>
+            Tasks.ForParallel(0, w.Length, i =>
             {
                 m[i] = b1 * m[i] + (1 - b1) * diff[i];
                 v[i] = b2 * v[i] + (1 - b2) * diff[i] * diff[i];

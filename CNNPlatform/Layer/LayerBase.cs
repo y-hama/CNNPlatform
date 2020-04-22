@@ -13,7 +13,7 @@ namespace CNNPlatform.Layer
         public Components.GPGPU.Function.FunctionBase ForwardFunction { get; set; }
         public Components.GPGPU.Function.FunctionBase BackFunction { get; set; }
 
-        public Utility.Types.DirectionPattern Direction { get; set; } = Utility.Types.DirectionPattern.Through;
+        public int Block { get; set; } = -1;
 
         public string ParameterStatus { get { return Variable.GetStatus + " " + Variable.GetSizeStatus; } }
 
@@ -39,7 +39,7 @@ namespace CNNPlatform.Layer
         {
             string res = "!!!!!!!!!!>";
             res += this.GetType().ToString() + "\n";
-            res += Direction.ToString() + "\n";
+            res += Block.ToString() + "\n";
             res += Variable.GetType().ToString() + "\n";
             res += "!!!!!>";
             res += Variable.EncodeParameter() + "\n";
@@ -56,7 +56,11 @@ namespace CNNPlatform.Layer
             #region
             var lbparams = layerbaseparam.Split('\n');
             layer = (LayerBase)Activator.CreateInstance(Type.GetType(lbparams[0]), new object[] { true });
-            layer.Direction = (Utility.Types.DirectionPattern)Enum.Parse(typeof(Utility.Types.DirectionPattern), lbparams[1]);
+            int block;
+            if (int.TryParse(lbparams[1], out block))
+            {
+                layer.Block = block;
+            }
             #endregion
 
             var variableparam = split[1];
@@ -69,7 +73,7 @@ namespace CNNPlatform.Layer
         public LayerBase Clone()
         {
             var clone = (LayerBase)Activator.CreateInstance(this.GetType(), new object[] { false });
-            clone.Direction = Direction;
+            clone.Block = Block;
             clone.Variable = Variable.Clone();
             return clone;
         }

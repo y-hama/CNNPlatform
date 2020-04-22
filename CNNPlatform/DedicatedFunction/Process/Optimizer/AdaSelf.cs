@@ -71,7 +71,7 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
             s1 = Math.Pow(10, sign * (Math.Ceiling(Math.Log10(max <= eps ? eps : max))));
             double bdt = Math.Pow(bd, Iteration);
             double eta = bdt * eta1 + (1 - bdt) * eta2;
-            Components.GPGPU.Parallel.For(0, w.Length, i =>
+            Tasks.ForParallel(0, w.Length, i =>
             {
                 var dw_a = dw_Adam(i, diff[i]);
                 var dw_s = dw_SGD(i, diff[i], max);
