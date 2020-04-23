@@ -18,8 +18,10 @@ namespace CNNPlatform.Process
 
         protected abstract int BatchCount { get; }
 
-        protected virtual int StartBlock { get; } = -1;
-        protected virtual int EndBlock { get; } = -1;
+        public int StartBlock { get; set; } = -1;
+        public int EndBlock { get; set; } = -1;
+
+        public bool ReverseStart { get; set; } = false;
 
         #region Buffer
         protected Components.RNdMatrix Input { get { return Model.InputLayer.Variable.Input; } }
@@ -80,7 +82,14 @@ namespace CNNPlatform.Process
                 Model = CNNPlatform.Model.Creater.Core.BasicImageCreater();
             }
             Console.WriteLine("BatchCount : {0}", BatchCount);
-            Model.StartBlock = StartBlock;
+            if (ReverseStart)
+            {
+                Model.StartBlock = Model.ReverseStartBlock;
+            }
+            else
+            {
+                Model.StartBlock = StartBlock;
+            }
             Model.EndBlock = EndBlock;
         }
 

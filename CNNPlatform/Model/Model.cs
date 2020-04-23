@@ -25,6 +25,7 @@ namespace CNNPlatform.Model
         }
 
         private int BlockIndex { get; set; } = 0;
+        public int ReverseStartBlock { get; private set; } = 0;
         public int StartBlock { get; set; } = -1;
         public int EndBlock { get; set; } = -1;
         internal int InputLayerIndex
@@ -34,13 +35,12 @@ namespace CNNPlatform.Model
                 int idx = 0;
                 if (StartBlock >= 0)
                 {
-                    if (StartBlock < LayerCount)
+                    for (int i = 0; i < LayerCount; i++)
                     {
-                        if (StartBlock <= EndBlock)
+                        if (Layer[i].Block == StartBlock)
                         {
-                            idx = StartBlock;
+                            idx = i; break;
                         }
-                        else { idx = EndBlock; }
                     }
                 }
                 return idx;
@@ -53,11 +53,14 @@ namespace CNNPlatform.Model
                 int idx = LayerCount - 1;
                 if (EndBlock >= 0)
                 {
-                    if (EndBlock < LayerCount)
+                    if (EndBlock >= 0)
                     {
-                        if (StartBlock <= EndBlock)
+                        for (int i = 0; i < LayerCount; i++)
                         {
-                            idx = EndBlock;
+                            if (Layer[i].Block == EndBlock + 1)
+                            {
+                                idx = i - 1; break;
+                            }
                         }
                     }
                 }
@@ -109,6 +112,8 @@ namespace CNNPlatform.Model
             Console.WriteLine("Epoch : {0}", Epoch);
             int.TryParse(gppsplit[1], out readtmp);
             Generation = readtmp;
+            int.TryParse(gppsplit[2], out readtmp);
+            ReverseStartBlock = readtmp;
             #endregion
             #region sizeparam
             BatchCount = batch;
@@ -135,7 +140,7 @@ namespace CNNPlatform.Model
         {
             #region ModelBaseFile Create
             string text = this.GetType().ToString() + "\n";
-            text += Epoch + " " + Generation + " " + Error + "\n";
+            text += Epoch + " " + Generation + " " + ReverseStartBlock + " " + Error + "\n";
             text += InputChannels.ToString() + " " + InputWidth.ToString() + " " + InputHeight.ToString() + "\n";
             text += "!!!!!!!!!!!!!!!>";
             string[] tmp = new string[LayerCount];
@@ -273,7 +278,10 @@ namespace CNNPlatform.Model
 
         private void AddLayer(Layer.LayerBase layer)
         {
-            layer.Block = BlockIndex;
+            if (layer.Block < 0)
+            {
+                layer.Block = BlockIndex;
+            }
             Layer.Add(layer);
             Console.WriteLine(string.Format("Layer({0,2}) block{1,2} : {2} -> {3}", LayerCount, layer.Block, layer.GetType().Name, layer.ParameterStatus));
         }
@@ -421,6 +429,7 @@ namespace CNNPlatform.Model
             }
 
             SetNewBlock();
+            ReverseStartBlock = BlockIndex;
             int tmpblk = Layer[LayerCount - 1].Block;
             for (int i = 0; i < list.Count; i++)
             {

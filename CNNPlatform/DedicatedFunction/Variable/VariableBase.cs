@@ -175,8 +175,8 @@ namespace CNNPlatform.DedicatedFunction.Variable
             sd /= Sigma.Data.Length;
             sd = Math.Sqrt(error[1]);
 
-            error[0] += err;
-            error[1] += sd;
+            error[0] = err;
+            error[1] = sd;
         }
 
         public VariableBase Clone()

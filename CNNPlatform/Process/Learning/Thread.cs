@@ -85,7 +85,7 @@ namespace CNNPlatform.Process.Learning
             Model.Learning(Input, Teacher, IterationFlag);
 
             var result = Model.ShowResult(640, 480);
-            var process = Model.ShowProcess();
+            var process = Model.ShowProcess(0.5);
             Components.Imaging.View.Show(result, "result");
             Components.Imaging.View.Show(process, "process");
             var span = (DateTime.Now - StartTime);

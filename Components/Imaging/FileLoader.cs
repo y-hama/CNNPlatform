@@ -214,12 +214,13 @@ namespace Components.Imaging
                 }
                 if (doAffine)
                 {
-                    if (inw > 1 && outw > 1 && inh > 1 && outh > 1)
+                    var w = Math.Min(mat1.Width, mat2.Width);
+                    var h = Math.Min(mat1.Height, mat2.Height);
                     {
-                        oflux = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
-                        ofluy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
-                        ofrdx = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inw, outw) / (scl) - 1)));
-                        ofrdy = State.RandomSource.Next(Math.Max(0, (int)(Math.Min(inh, outh) / (scl) - 1)));
+                        oflux = State.RandomSource.Next(Math.Max(0, (int)(w / (scl) - 1)));
+                        ofluy = State.RandomSource.Next(Math.Max(0, (int)(h / (scl) - 1)));
+                        ofrdx = State.RandomSource.Next(Math.Max(0, (int)(w / (scl) - 1)));
+                        ofrdy = State.RandomSource.Next(Math.Max(0, (int)(h / (scl) - 1)));
                     }
                 }
 
@@ -244,7 +245,8 @@ namespace Components.Imaging
                     else if (outchannels == 3) { Cv2.CvtColor(tframe, tframe, ColorConversionCodes.GRAY2BGR); }
                     else { throw new Exception(); }
                 }
-                tframe = EffectProcess.Effect(tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area));
+                tframe = EffectProcess.Effect(tframe);
+                tframe = tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area);
                 tframe = EffectProcess.Offset(tframe, lu, rd, flipx, flipy, rotangle);
                 tframes.Add(tframe.Clone());
             }
