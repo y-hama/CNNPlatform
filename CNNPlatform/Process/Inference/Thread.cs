@@ -15,12 +15,13 @@ namespace CNNPlatform.Process.Inference
         #endregion
 
         protected override int BatchCount { get { return 1; } }
-        
+
         protected override void SetInputLoaderOption()
         {
             Loader.InputSource = CNNPlatform.Process.Task.InputLoader.Source.Camera;
-            Loader.Flip = false;
-            Loader.Rotation = false;
+            Loader.FlipX = false;
+            Loader.FlipY = false;
+            Loader.Rotation = 0;
             Loader.Offset = false;
         }
 

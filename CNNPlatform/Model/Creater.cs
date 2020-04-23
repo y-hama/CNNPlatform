@@ -52,7 +52,7 @@ namespace CNNPlatform.Model
             model.AddPooling(2, 1);
             model.AddConvolution(64, 1, 1, Types.Optimizer.Adam);
             model.AddPooling(2, 1);
-            model.AddConvolution(128, 1, 1, Types.Optimizer.Adam);
+            model.AddConvolution(64, 1, 1, Types.Optimizer.Adam);
             model.AddAffine(512, Types.Optimizer.Adam);
             model.AddAffine(256, Types.Optimizer.Adam);
             model.AddAffine(64, Types.Optimizer.Adam);

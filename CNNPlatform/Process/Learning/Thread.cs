@@ -36,8 +36,9 @@ namespace CNNPlatform.Process.Learning
             Loader.InputSource = CNNPlatform.Process.Task.InputLoader.Source.File;
 
             Loader.SourceLocation = new System.IO.DirectoryInfo(LoadFolder);
-            Loader.Flip = true;
-            Loader.Rotation = true;
+            Loader.FlipX = false;
+            Loader.FlipY = true;
+            Loader.Rotation = 0;
             Loader.Offset = true;
         }
 

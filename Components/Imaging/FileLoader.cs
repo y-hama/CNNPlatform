@@ -179,7 +179,7 @@ namespace Components.Imaging
             return Index.Dequeue().Images;
         }
 
-        public bool LoadImage(int batchcount, int inchannels, int inw, int inh, int outchannels, int outw, int outh, bool doFlip, bool doRot, bool doAffine, out RNdMatrix smat, out RNdMatrix tmat)
+        public bool LoadImage(int batchcount, int inchannels, int inw, int inh, int outchannels, int outw, int outh, bool doFlipX, bool doFlipY, double doRot, bool doAffine, out RNdMatrix smat, out RNdMatrix tmat)
         {
             bool ret = false;
             smat = tmat = null;
@@ -203,15 +203,15 @@ namespace Components.Imaging
                 double rotangle = 0;
                 Point lu = new Point(), rd = new Point();
 
-                if (doFlip)
+                if (doFlipX)
                 {
                     flipx = (State.RandomSource.NextDouble() > 0.5 ? true : false);
+                }
+                if (doFlipY)
+                {
                     flipy = (State.RandomSource.NextDouble() > 0.5 ? true : false);
                 }
-                if (doRot)
-                {
-                    rotangle = (State.RandomSource.NextDouble() * 2 - 1) * 90;
-                }
+                rotangle = (State.RandomSource.NextDouble() * 2 - 1) * doRot;
                 if (doAffine)
                 {
                     var w = Math.Min(mat1.Width, mat2.Width);
