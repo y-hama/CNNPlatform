@@ -85,6 +85,22 @@ namespace CNNPlatform.DedicatedFunction.Variable
             EncodeParameterCore(ref res);
             return res;
         }
+
+        protected abstract void EncodeParameterCore(ref Components.Locker.TagFileController.TagSegment container);
+        public void EncodeParameter(ref Components.Locker.TagFileController.TagSegment container)
+        {
+            var sizetag = container.AddTag("size");
+            sizetag.AddValue("InWidth", InWidth);
+            sizetag.AddValue("InHeight", InHeight);
+            sizetag.AddValue("InputChannels", InputChannels);
+            sizetag.AddValue("OutWidth", OutWidth);
+            sizetag.AddValue("OutHeight", OutHeight);
+            sizetag.AddValue("OutputChannels", OutputChannels);
+
+            var paramtag = container.AddTag("param");
+            EncodeParameterCore(ref paramtag);
+        }
+
         public abstract string EncodeOption();
         public abstract void SaveObject(System.IO.DirectoryInfo location);
 

@@ -16,6 +16,7 @@ namespace CNNPlatform
         {
             Process.Learning.Thread.Worker.Start();
             //Process.Inference.Thread.Worker.Start();
+
         }
     }
 }

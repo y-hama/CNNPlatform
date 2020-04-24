@@ -49,12 +49,13 @@ namespace Components.Imaging
                     }
                 }
 
-                var center = new Point2f(source.Width / 2, source.Height / 2);
+                var center = new Point2f(frame.Width / 2, frame.Height / 2);
                 Mat rMat = Cv2.GetRotationMatrix2D(center, rotangle, 1);
-                Cv2.WarpAffine(frame, frame, rMat, new Size(source.Rows, source.Cols));
+                Cv2.WarpAffine(frame, frame, rMat, new Size(frame.Cols, frame.Rows));
 
-                frame = frame.Clone()[new Rect(leftup, new Size(source.Width - (leftup.X + rightdown.X), source.Height - (leftup.Y + rightdown.Y)))];
-                return frame.Resize(source.Size());
+                var rect = new Rect(leftup, new Size(frame.Width - (leftup.X + rightdown.X), frame.Height - (leftup.Y + rightdown.Y)));
+                frame = frame.Clone()[rect];
+                return frame.Resize(source.Size(), 0, 0, InterpolationFlags.Area);
             }
         }
     }

@@ -7,7 +7,7 @@ using Components.GPGPU;
 
 namespace CNNPlatform.DedicatedFunction.Process
 {
-    class ReshapeBack : Components.GPGPU.Function.FunctionBase
+    class ReshapeBack : DedicatedFunctionBase
     {
         protected override void CreateGpuSource()
         {

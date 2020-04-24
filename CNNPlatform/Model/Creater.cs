@@ -43,19 +43,19 @@ namespace CNNPlatform.Model
         {
             var model = new CNNPlatform.Model.Model(Instance, BatchCount, 3, 128, 128);
 
-            model.AddConvolution(16, 1, 1, Types.Optimizer.Adam);
+            model.AddConvolution(16, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
-            model.AddConvolution(32, 1, 1, Types.Optimizer.Adam);
-            model.AddConvolution(32, 1, 1, Types.Optimizer.Adam);
+            model.AddConvolution(32, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddConvolution(32, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
-            model.AddConvolution(48, 1, 1, Types.Optimizer.Adam);
+            model.AddConvolution(48, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
-            model.AddConvolution(64, 1, 1, Types.Optimizer.Adam);
+            model.AddConvolution(64, 1, 1, Types.Optimizer.AdaSelf);
             model.AddPooling(2, 1);
-            model.AddConvolution(64, 1, 1, Types.Optimizer.Adam);
-            model.AddAffine(512, Types.Optimizer.Adam);
-            model.AddAffine(256, Types.Optimizer.Adam);
-            model.AddAffine(64, Types.Optimizer.Adam);
+            model.AddConvolution(64, 1, 1, Types.Optimizer.AdaSelf);
+            model.AddAffine(512, Types.Optimizer.AdaSelf);
+            model.AddAffine(256, Types.Optimizer.AdaSelf);
+            model.AddAffine(64, Types.Optimizer.AdaSelf);
 
             model.AddReverse();
             return model;

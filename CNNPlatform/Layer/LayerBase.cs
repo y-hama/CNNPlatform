@@ -25,6 +25,13 @@ namespace CNNPlatform.Layer
             }
         }
 
+        public LayerBase Confirm()
+        {
+            ForwardFunction.OptionCreater(Variable);
+            BackFunction.OptionCreater(Variable);
+            return this;
+        }
+
         protected abstract void FunctionCreator();
 
         public void RefreshError()
@@ -46,6 +53,16 @@ namespace CNNPlatform.Layer
             res += ";>" + Variable.EncodeOption() + "\n";
 
             return res + "\n";
+        }
+
+        public void Encode(ref Components.Locker.TagFileController.TagSegment container)
+        {
+            var tag = container.AddTag(this.GetType().ToString());
+            tag.AddValue("Block", Block);
+            tag.AddValue("VariableType", Variable.GetType().ToString());
+
+            var vartag = tag.AddTag("Variable");
+            Variable.EncodeParameter(ref vartag);
         }
 
         public static LayerBase Decode(string location, string text, Utility.Shared.ModelParameter instance, int batchcount)

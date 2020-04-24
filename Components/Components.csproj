@@ -104,6 +104,7 @@
     <Compile Include="Locker\HashCreator.cs" />
     <Compile Include="Locker\ObjectLocker.cs" />
     <Compile Include="Locker\Process.cs" />
+    <Compile Include="Locker\TagFileController.cs" />
     <Compile Include="Task.cs" />
     <Compile Include="Terminal.cs" />
     <Compile Include="GPGPU\Core.cs" />

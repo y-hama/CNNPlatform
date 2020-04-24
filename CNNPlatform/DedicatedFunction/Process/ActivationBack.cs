@@ -7,7 +7,7 @@ using Components.GPGPU;
 
 namespace CNNPlatform.DedicatedFunction.Process
 {
-    class ActivationBack : Components.GPGPU.Function.ParameterizedFunctionBase
+    class ActivationBack : DedicatedParameterizedFunctionBase
     {
         protected override void CreateGpuSource()
         {

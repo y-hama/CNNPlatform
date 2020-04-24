@@ -7,7 +7,7 @@ using Components.GPGPU;
 
 namespace CNNPlatform.DedicatedFunction.Process
 {
-    class ConvolutionForward : Components.GPGPU.Function.FunctionBase
+    class ConvolutionForward : DedicatedFunctionBase
     {
         protected override void CreateGpuSource()
         {

@@ -7,7 +7,7 @@ using Components.GPGPU;
 
 namespace CNNPlatform.DedicatedFunction.Process
 {
-    class PoolingForward : Components.GPGPU.Function.FunctionBase
+    class PoolingForward : DedicatedFunctionBase
     {
         protected override void CreateGpuSource()
         {

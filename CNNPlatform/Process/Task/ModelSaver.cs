@@ -51,9 +51,8 @@ namespace CNNPlatform.Process.Task
         {
             var mloc = new System.IO.DirectoryInfo(Root.FullName + @"\" + model.Epoch);
             if (!Root.Exists) { Root.Create(); }
-            if (mloc.Exists) { mloc.Delete(true); }
-            mloc.Create();
-            model.Save(mloc.FullName);
+            //model.Save(mloc.FullName);
+            model.SaveTemporary(mloc.FullName);
         }
 
         public void Pushback(Model.Model model)

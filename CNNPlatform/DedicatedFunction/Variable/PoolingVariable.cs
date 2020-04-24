@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Components;
+using Components.Locker;
 
 namespace CNNPlatform.DedicatedFunction.Variable
 {
@@ -58,6 +59,12 @@ namespace CNNPlatform.DedicatedFunction.Variable
         {
             res += CompressSize.ToString() + " ";
             res += ExpandSize.ToString() + " ";
+        }
+
+        protected override void EncodeParameterCore(ref TagFileController.TagSegment container)
+        {
+            container.AddValue("CompressSize", CompressSize);
+            container.AddValue("ExpandSize", ExpandSize);
         }
 
         public override string EncodeOption()

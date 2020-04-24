@@ -7,7 +7,7 @@ using Components.GPGPU;
 
 namespace CNNPlatform.DedicatedFunction.Process
 {
-    class ConvolutionBack : Components.GPGPU.Function.ParameterizedFunctionBase
+    class ConvolutionBack : DedicatedParameterizedFunctionBase
     {
         protected override void CreateGpuSource()
         {
@@ -64,8 +64,8 @@ namespace CNNPlatform.DedicatedFunction.Process
 
         protected override void CreateOption()
         {
-            BiasOptimizer = Optimizer.OptimizerBase.CreateInstance(OptimizerType);
-            KernelOptimizer = Optimizer.OptimizerBase.CreateInstance(OptimizerType);
+            BiasOptimizer = Optimizer.OptimizerBase.CreateInstance(OptimizerType, (Variable as Variable.ConvolutionVariable).OptimizerBiasBuffer, WeightBias);
+            KernelOptimizer = Optimizer.OptimizerBase.CreateInstance(OptimizerType, (Variable as Variable.ConvolutionVariable).OptimizerKernelBuffer, WeightKernel);
         }
 
         protected override void ConvertVariable(ComputeVariable _variable)

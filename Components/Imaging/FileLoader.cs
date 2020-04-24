@@ -234,8 +234,8 @@ namespace Components.Imaging
                     else if (inchannels == 3) { Cv2.CvtColor(sframe, sframe, ColorConversionCodes.GRAY2BGR); }
                     else { throw new Exception(); }
                 }
-                sframe = sframe.Resize(new Size(inw, inh), 0, 0, InterpolationFlags.Area);
                 sframe = EffectProcess.Offset(sframe, lu, rd, flipx, flipy, rotangle);
+                sframe = sframe.Resize(new Size(inw, inh), 0, 0, InterpolationFlags.Area);
                 sframes.Add(sframe.Clone());
 
                 var tframe = mat2.Clone();
@@ -246,8 +246,8 @@ namespace Components.Imaging
                     else { throw new Exception(); }
                 }
                 tframe = EffectProcess.Effect(tframe);
-                tframe = tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area);
                 tframe = EffectProcess.Offset(tframe, lu, rd, flipx, flipy, rotangle);
+                tframe = tframe.Resize(new Size(outw, outh), 0, 0, InterpolationFlags.Area);
                 tframes.Add(tframe.Clone());
             }
 

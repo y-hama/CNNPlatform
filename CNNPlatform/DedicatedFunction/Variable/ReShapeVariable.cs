@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Components.Locker;
 
 namespace CNNPlatform.DedicatedFunction.Variable
 {
@@ -53,6 +54,10 @@ namespace CNNPlatform.DedicatedFunction.Variable
         }
 
         protected override void EncodeParameterCore(ref string res)
+        {
+        }
+
+        protected override void EncodeParameterCore(ref TagFileController.TagSegment container)
         {
         }
     }

@@ -7,7 +7,7 @@ using Components.GPGPU;
 
 namespace CNNPlatform.DedicatedFunction.Process
 {
-    class AffineBack : Components.GPGPU.Function.ParameterizedFunctionBase
+    class AffineBack : DedicatedParameterizedFunctionBase
     {
         protected override void CreateGpuSource()
         {
@@ -54,7 +54,7 @@ namespace CNNPlatform.DedicatedFunction.Process
 
         protected override void CreateOption()
         {
-            WeightOptimizer = Optimizer.OptimizerBase.CreateInstance(OptimizerType);
+            WeightOptimizer = Optimizer.OptimizerBase.CreateInstance(OptimizerType, (Variable as Variable.AffineVariable).OptimizerWeightBuffer, Weight);
         }
 
         protected override void ConvertVariable(ComputeVariable _variable)

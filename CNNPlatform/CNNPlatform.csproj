@@ -52,6 +52,8 @@
     <Compile Include="DedicatedFunction\Process\AffineForward.cs" />
     <Compile Include="DedicatedFunction\Process\ConvolutionBack.cs" />
     <Compile Include="DedicatedFunction\Process\ConvolutionForward.cs" />
+    <Compile Include="DedicatedFunction\Process\DedicatedFunctionBase.cs" />
+    <Compile Include="DedicatedFunction\Process\DedicatedParameterizedFunctionBase.cs" />
     <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_affineback_prop.cs" />
     <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_affineback_weight.cs" />
     <Compile Include="DedicatedFunction\Process\GpgpuSource\gp_affinefowd.cs" />

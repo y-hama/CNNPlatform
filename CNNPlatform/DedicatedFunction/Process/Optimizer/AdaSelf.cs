@@ -9,6 +9,26 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
 {
     class AdaSelf : OptimizerBase
     {
+        public AdaSelf(List<Components.RNdMatrix> sender, Components.Real[] weight)
+        {
+            if (!Initialized)
+            {
+                if (sender.Count < 2)
+                {
+                    sender.Add(new RNdMatrix(1, 1, 1, weight.Length) { Data = new Real[weight.Length] });
+                    sender.Add(new RNdMatrix(1, 1, 1, weight.Length) { Data = new Real[weight.Length] });
+                    sender.Add(new RNdMatrix(1, 1, 1, weight.Length) { Data = new Real[weight.Length] });
+                    sender.Add(new RNdMatrix(1, 1, 1, weight.Length) { Data = new Real[weight.Length] });
+                    sender.Add(new RNdMatrix(1, 1, 1, weight.Length) { Data = new Real[weight.Length] });
+                }
+                m = sender[0].Data;
+                v = sender[1].Data;
+                pd = sender[2].Data;
+                vd = sender[3].Data;
+                ad = sender[4].Data;
+                Initialized = true;
+            }
+        }
 
         #region AdamBase
         private Real[] m { get; set; }
@@ -53,18 +73,6 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
         public override double Update(ref Real[] _w, Real[] diff, bool doUpdate, double rho = 0)
         {
             var w = _w;
-            if (!Initialized)
-            {
-                #region Parameter Initialize
-                m = new Real[w.Length];
-                v = new Real[w.Length];
-                pd = new Real[w.Length];
-                vd = new Real[w.Length];
-                ad = new Real[w.Length];
-                #endregion
-
-                Initialized = true;
-            }
             double delta = 0;
             double max = diff.Max(x => Math.Abs(x));
             double sign = max > 1 ? -1 : 1;

@@ -108,7 +108,7 @@ namespace Components.GPGPU.Function
         protected delegate void Function();
         protected abstract void CpuFunction();
         protected abstract void GpuFunction();
-        
+
         protected virtual void CreateOption() { }
         protected virtual void UpdateWithCondition() { }
         #endregion
@@ -117,6 +117,32 @@ namespace Components.GPGPU.Function
         #endregion
 
         #region ProtectedMethod
+        protected void FunctionConfiguration()
+        {
+            if (IsGpuProcess)
+            {
+                Context = new List<ComputeContext>();
+                Kernel = new List<ComputeKernel>();
+                Queue = new List<ComputeCommandQueue>();
+                GpuParameter = new List<List<GpuParamSet>>();
+                var option = GPGPU.Core.Instance.GetOption(GpuSource);
+                foreach (var item in option)
+                {
+                    Context.Add(item.Context);
+                    Kernel.Add(item.Kernel);
+                    Queue.Add(item.Queue);
+                }
+                for (int i = 0; i < option.Count; i++)
+                {
+                    GpuParameter.Add(new List<GpuParamSet>());
+                }
+                ProcessFunction = GpuFunction;
+            }
+            else
+            {
+                ProcessFunction = CpuFunction;
+            }
+        }
         protected void AddSource(SourceCode code)
         {
             if (GpuSource == null) { GpuSource = new List<SourceCode>(); }
@@ -196,42 +222,17 @@ namespace Components.GPGPU.Function
             Queue[sellectionIndex].Execute(Kernel[sellectionIndex], null, globalworksize, null, null);
             Queue[sellectionIndex].Finish();
         }
-
-        public void OptionCreater()
-        {
-            if (!OptionCreated)
-            {
-                CreateOption();
-                OptionCreated = true;
-            }
-        }
         #endregion
 
         #region PublicMethod
-        protected void FunctionConfiguration()
+        public void OptionCreater(ComputeVariable variable)
         {
-            if (IsGpuProcess)
+            if (!OptionCreated)
             {
-                Context = new List<ComputeContext>();
-                Kernel = new List<ComputeKernel>();
-                Queue = new List<ComputeCommandQueue>();
-                GpuParameter = new List<List<GpuParamSet>>();
-                var option = GPGPU.Core.Instance.GetOption(GpuSource);
-                foreach (var item in option)
-                {
-                    Context.Add(item.Context);
-                    Kernel.Add(item.Kernel);
-                    Queue.Add(item.Queue);
-                }
-                for (int i = 0; i < option.Count; i++)
-                {
-                    GpuParameter.Add(new List<GpuParamSet>());
-                }
-                ProcessFunction = GpuFunction;
-            }
-            else
-            {
-                ProcessFunction = CpuFunction;
+                Variable = variable;
+                ConvertVariable(variable);
+                CreateOption();
+                OptionCreated = true;
             }
         }
 
@@ -256,7 +257,7 @@ namespace Components.GPGPU.Function
                 Variable = variable;
                 _cParam = variable.Parameter;
                 ConvertVariable(variable);
-                OptionCreater();
+                OptionCreater(variable);
                 ProcessFunction();
                 UpdateWithCondition();
 

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Components;
+using Components.Locker;
 
 namespace CNNPlatform.DedicatedFunction.Variable
 {
@@ -22,6 +23,9 @@ namespace CNNPlatform.DedicatedFunction.Variable
 
         public Components.RNdMatrix WeightBias;
         public Components.RNdMatrix WeightKernel;
+
+        public List<RNdMatrix> OptimizerBiasBuffer = new List<RNdMatrix>();
+        public List<RNdMatrix> OptimizerKernelBuffer = new List<RNdMatrix>();
 
         public Components.Real[] WeightDifference;
 
@@ -107,6 +111,30 @@ namespace CNNPlatform.DedicatedFunction.Variable
             res += Rho.ToString() + " ";
         }
 
+        protected override void EncodeParameterCore(ref TagFileController.TagSegment container)
+        {
+            container.AddValue("OutScale", OutScale);
+            container.AddValue("KernelSize", KernelSize);
+            container.AddValue("KernelExpand", KernelExpand);
+            container.AddValue("OptimizerType", OptimizerType);
+            container.AddValue("Rho", Rho);
+
+            var hashtag = container.AddTag("hash");
+            hashtag.AddValue("WeightBias", WeightBias.Hash);
+            hashtag.AddValue("WeightKernel", WeightKernel.Hash);
+
+            var bopttag = container.AddTag("OptimizerBiasBuffer");
+            for (int i = 0; i < OptimizerBiasBuffer.Count; i++)
+            {
+                bopttag.AddValue(i.ToString(), OptimizerBiasBuffer[i].Hash);
+            }
+            var kopttag = container.AddTag("OptimizerKernelBuffer");
+            for (int i = 0; i < OptimizerKernelBuffer.Count; i++)
+            {
+                kopttag.AddValue(i.ToString(), OptimizerKernelBuffer[i].Hash);
+            }
+        }
+
         public override string EncodeOption()
         {
             return WeightBias.GetHash() + "\n" + WeightKernel.GetHash();
@@ -131,6 +159,14 @@ namespace CNNPlatform.DedicatedFunction.Variable
         {
             WeightBias.Save(location);
             WeightKernel.Save(location);
+            for (int i = 0; i < OptimizerBiasBuffer.Count; i++)
+            {
+                OptimizerBiasBuffer[i].Save(location);
+            }
+            for (int i = 0; i < OptimizerKernelBuffer.Count; i++)
+            {
+                OptimizerKernelBuffer[i].Save(location);
+            }
         }
 
         public override void CoreClone(ref VariableBase _clone)
@@ -140,8 +176,16 @@ namespace CNNPlatform.DedicatedFunction.Variable
             (_clone as ConvolutionVariable).KernelExpand = KernelExpand;
             (_clone as ConvolutionVariable).OptimizerType = OptimizerType;
             (_clone as ConvolutionVariable).Rho = Rho;
-            (_clone as ConvolutionVariable).WeightBias = WeightBias.Clone() as Components.RNdMatrix; ;
-            (_clone as ConvolutionVariable).WeightKernel = WeightKernel.Clone() as Components.RNdMatrix; ;
+            (_clone as ConvolutionVariable).WeightBias = WeightBias.Clone() as Components.RNdMatrix;
+            (_clone as ConvolutionVariable).WeightKernel = WeightKernel.Clone() as Components.RNdMatrix;
+            if (OptimizerBiasBuffer != null)
+            {
+                (_clone as ConvolutionVariable).OptimizerBiasBuffer = new List<RNdMatrix>(OptimizerBiasBuffer);
+            }
+            if (OptimizerKernelBuffer != null)
+            {
+                (_clone as ConvolutionVariable).OptimizerKernelBuffer = new List<RNdMatrix>(OptimizerKernelBuffer);
+            }
         }
     }
 }

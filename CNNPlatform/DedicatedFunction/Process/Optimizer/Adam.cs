@@ -9,6 +9,21 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
 {
     class Adam : OptimizerBase
     {
+        public Adam(List<Components.RNdMatrix> sender, Components.Real[] weight)
+        {
+            if (!Initialized)
+            {
+                if (sender.Count < 2)
+                {
+                    sender.Add(new RNdMatrix(1, 1, 1, weight.Length) { Data = new Real[weight.Length] });
+                    sender.Add(new RNdMatrix(1, 1, 1, weight.Length) { Data = new Real[weight.Length] });
+                }
+                m = sender[0].Data;
+                v = sender[1].Data;
+                Initialized = true;
+            }
+        }
+
         private Components.Real[] m { get; set; }
         private Components.Real[] v { get; set; }
 
@@ -20,12 +35,6 @@ namespace CNNPlatform.DedicatedFunction.Process.Optimizer
         public override double Update(ref Real[] _w, Real[] diff, bool doUpdate, double rho = 0)
         {
             var w = _w;
-            if (!Initialized)
-            {
-                Initialized = true;
-                m = new Real[w.Length];
-                v = new Real[w.Length];
-            }
             double _rho = (a + rho) / 2;
             double delta = 0;
             Tasks.ForParallel(0, w.Length, i =>

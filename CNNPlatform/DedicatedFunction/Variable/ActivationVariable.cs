@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Components;
+using Components.Locker;
 
 namespace CNNPlatform.DedicatedFunction.Variable
 {
@@ -47,6 +48,11 @@ namespace CNNPlatform.DedicatedFunction.Variable
         protected override void EncodeParameterCore(ref string res)
         {
             res += ActivationType.ToString() + " ";
+        }
+
+        protected override void EncodeParameterCore(ref TagFileController.TagSegment container)
+        {
+            container.AddValue("ActivationType", ActivationType);
         }
 
         public override string EncodeOption()

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Components;
+using Components.Locker;
 
 namespace CNNPlatform.DedicatedFunction.Variable
 {
@@ -12,9 +13,11 @@ namespace CNNPlatform.DedicatedFunction.Variable
     {
         public Utility.Types.Optimizer OptimizerType { get; set; } = Utility.Types.Optimizer.Adam;
 
+
         public double Rho { get; set; } = 0.001;
 
         public Components.RNdMatrix Weight;
+        public List<Components.RNdMatrix> OptimizerWeightBuffer = new List<RNdMatrix>();
 
         public Components.Real[] WeightDifference;
 
@@ -82,6 +85,21 @@ namespace CNNPlatform.DedicatedFunction.Variable
             res += Rho.ToString() + " ";
         }
 
+        protected override void EncodeParameterCore(ref TagFileController.TagSegment container)
+        {
+            container.AddValue("OptimizerType", OptimizerType);
+            container.AddValue("Rho", Rho);
+
+            var hashtag = container.AddTag("hash");
+            hashtag.AddValue("Weight", Weight.Hash);
+
+            var opttag = container.AddTag("OptimizerWeightBuffer");
+            for (int i = 0; i < OptimizerWeightBuffer.Count; i++)
+            {
+                opttag.AddValue(i.ToString(), OptimizerWeightBuffer[i].Hash);
+            }
+        }
+
         public override string EncodeOption()
         {
             return Weight.GetHash();
@@ -101,6 +119,10 @@ namespace CNNPlatform.DedicatedFunction.Variable
         public override void SaveObject(DirectoryInfo location)
         {
             Weight.Save(location);
+            for (int i = 0; i < OptimizerWeightBuffer.Count; i++)
+            {
+                OptimizerWeightBuffer[i].Save(location);
+            }
         }
 
         public override void CoreClone(ref VariableBase _clone)
@@ -108,6 +130,10 @@ namespace CNNPlatform.DedicatedFunction.Variable
             (_clone as AffineVariable).OptimizerType = OptimizerType;
             (_clone as AffineVariable).Rho = Rho;
             (_clone as AffineVariable).Weight = Weight.Clone() as Components.RNdMatrix;
+            if (OptimizerWeightBuffer != null)
+            {
+                (_clone as AffineVariable).OptimizerWeightBuffer = new List<RNdMatrix>(OptimizerWeightBuffer);
+            }
         }
     }
 }
